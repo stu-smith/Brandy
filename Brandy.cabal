@@ -14,10 +14,15 @@ executable Brandy
   main-is:             Main.hs
   other-modules:       Database, Routing, Schema
   build-depends:         base
+                       , time
                        , scotty
                        , persistent
                        , persistent-postgresql
                        , persistent-sqlite
                        , persistent-template
+                       , transformers
+                       , monad-control
+                       , monad-logger
+                       , resourcet
   hs-source-dirs:      src
-  ghc-options:         -O3 -funbox-strict-fields -Wall -Werror
+  ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
