@@ -12,9 +12,12 @@ cabal-version:       >=1.8
 
 executable Brandy
   main-is:             Main.hs
-  other-modules:       Routing
+  other-modules:       Database, Routing, Schema
   build-depends:         base
                        , scotty
+                       , persistent
+                       , persistent-postgresql
+                       , persistent-sqlite
+                       , persistent-template
   hs-source-dirs:      src
   ghc-options:         -O3 -funbox-strict-fields -Wall -Werror
-  extensions:          OverloadedStrings
