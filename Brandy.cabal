@@ -12,10 +12,12 @@ cabal-version:       >=1.8
 
 executable Brandy
   main-is:             Main.hs
-  other-modules:       Database, Routing, Schema
+  other-modules:       Database, Routing, Schema, Api.Users, Api.Resources
   build-depends:         base
+                       , text
                        , time
                        , scotty
+                       , esqueleto
                        , persistent
                        , persistent-postgresql
                        , persistent-sqlite
@@ -24,5 +26,6 @@ executable Brandy
                        , monad-control
                        , monad-logger
                        , resourcet
-  hs-source-dirs:      src
+                       , aeson
+  hs-source-dirs:      src, src/api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror

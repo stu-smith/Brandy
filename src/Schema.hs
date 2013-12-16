@@ -8,29 +8,30 @@
 {-# LANGUAGE TypeFamilies #-}
 
 module Schema
-( migrate
-, User, UserId
-, Content, ContentId
-)
 where
 
+import Data.Text            ( Text )
 import Data.Time            ( UTCTime )
-import Database.Persist.TH  ( share, mkPersist, sqlSettings, mkMigrate, persistLowerCase )
+import Database.Persist.TH  ( share, mkPersist, sqlOnlySettings, mkMigrate, persistLowerCase )
 
 
-share [mkPersist sqlSettings, mkMigrate "migrate"] [persistLowerCase|
+share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
 
-  User
-    email        String
-    displayName  String
+  User json
+    email        Text
+    displayName  Text
     deriving Show Read Eq Ord
 
-  Content
-    path         String
-    created      UTCTime
-    modified     UTCTime
-    contentType  String
-    content      String
+  Resource json
+    path         Text
     deriving Show Read Eq Ord
+
+  ResourceHistory json
+    resource     ResourceId
+    createdBy    UserId
+    createdAt    UTCTime
+    public       Bool
+    contentType  Text
+    content      Text
 
 |]

@@ -2,7 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main
-( main
+(
+  main
 )
 where
 

@@ -14,7 +14,7 @@ import Web.Scotty                 ( ActionM, json )
 import Database.Esqueleto as Sql  ( select, from, (^.), Value(..) )
 
 import Schema
-import Database                ( runSql )
+import Database                   ( runSql )
 
 
 apiGetResources :: ActionM ()
