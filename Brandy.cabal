@@ -16,16 +16,15 @@ executable Brandy
   build-depends:         base
                        , text
                        , time
-                       , scotty
-                       , esqueleto
-                       , persistent
-                       , persistent-postgresql
-                       , persistent-sqlite
-                       , persistent-template
                        , transformers
+                       , resourcet
+                       , persistent
+                       , persistent-template
+                       , persistent-sqlite
                        , monad-control
                        , monad-logger
-                       , resourcet
+                       , esqueleto
+                       , scotty
                        , aeson
-  hs-source-dirs:      src, src/api
+  hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror

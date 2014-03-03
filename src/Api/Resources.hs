@@ -3,14 +3,16 @@
 
 module Api.Resources
 (
-    apiGetResources
+  apiGetResources
+, apiGetNamedResource
 )
 where
 
 import Data.Aeson as J            ( Value, object, (.=) )
 import Data.Text                  ( Text )
+import Data.Text.Lazy             ( fromStrict )
 import Control.Monad.IO.Class     ( liftIO )
-import Web.Scotty                 ( ActionM, json )
+import Web.Scotty                 ( ActionM, json, text )
 import Database.Esqueleto as Sql  ( select, from, (^.), Value(..) )
 
 import Schema
@@ -20,6 +22,10 @@ import Database                   ( runSql )
 apiGetResources :: ActionM ()
 apiGetResources
     = json =<< liftIO sqlGetAllResourcesSummary
+
+apiGetNamedResource :: Text -> ActionM ()
+apiGetNamedResource name
+    = text $ fromStrict name
 
 sqlGetAllResourcesSummary :: IO [J.Value]
 sqlGetAllResourcesSummary
