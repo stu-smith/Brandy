@@ -7,15 +7,25 @@ module Routing
 )
 where
 
-import Web.Scotty  ( ScottyM, get, html, param )
+import Web.Scotty  ( ScottyM, get, post, delete, html, param , regex)
 
 import Api.Users             ( apiGetUsers )
-import Api.Resources         ( apiGetResources, apiGetNamedResource )
+import Api.Resources         ( apiGetResources, apiGetNamedResource
+	                         , apiInsertNamedResource, apiDeleteNamedResource )
 
 
 routes :: ScottyM ()
 routes
-    = do get "/"                    $ html "ROOT"
-         get "/api/users"             apiGetUsers
-         get "/api/resources"         apiGetResources
-         get "/api/resources/:name" $ apiGetNamedResource =<< param "name"
+    = do get    rootPattern               $ html "ROOT"
+
+         get    userCollectionPattern       apiGetUsers
+         
+         get    resourceCollectionPattern   apiGetResources
+         get    resourceElementPattern    $ apiGetNamedResource =<< param "1"
+         post   resourceElementPattern    $ apiInsertNamedResource =<< param "1"
+         delete resourceElementPattern    $ apiDeleteNamedResource =<< param "1"
+
+  where rootPattern = "/"
+        userCollectionPattern = "/api/users"
+        resourceCollectionPattern = "/api/resources"
+        resourceElementPattern = regex "^/api/resources/(.*)$" -- "/api/resources/*name"
