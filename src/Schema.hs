@@ -25,14 +25,11 @@ share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
 
   Resource json
     path         Text
-    deriving Show Read Eq Ord
-
-  ResourceHistory json
-    resource     ResourceId
     createdBy    UserId
     createdAt    UTCTime
     public       Bool
     contentType  Text
     content      Text
+    deriving Show Read Eq Ord
 
 |]

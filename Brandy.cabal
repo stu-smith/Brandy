@@ -26,5 +26,6 @@ executable Brandy
                        , esqueleto
                        , scotty
                        , aeson
+                       , http-types
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror

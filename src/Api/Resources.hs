@@ -4,52 +4,64 @@
 module Api.Resources
 (
   apiGetResources
-, apiGetNamedResource
-, apiInsertNamedResource
-, apiDeleteNamedResource
+, apiGetResourceByKey
+, apiInsertResource
+, apiDeleteResourceByKey
 )
 where
 
+import Data.Int                   ( Int64 )
 import Data.Aeson as J            ( Value, object, (.=) )
 import Data.Text                  ( Text )
 import Data.Text.Lazy             ( fromStrict )
 import Control.Monad.IO.Class     ( liftIO )
-import Web.Scotty                 ( ActionM, json, text )
-import Database.Esqueleto as Sql  ( Value(..), select, from, (^.) )
-import Database.Persist           ( Key, insert )
+import Web.Scotty                 ( ActionM, json, text, status, jsonData )
+import Network.HTTP.Types.Status  ( notFound404 )
+import Database.Esqueleto as Sql  ( Value(..), select, deleteCount, from, where_, (^.), (==.), val )
+import Database.Persist           ( Key, Entity(..), insert )
 
 import Schema
 import Database                   ( runSql )
+import ApiUtility                 ( parseKey )
 
 
 apiGetResources :: ActionM ()
 apiGetResources
     = json =<< liftIO sqlGetAllResourcesSummary
 
-apiGetNamedResource :: Text -> ActionM ()
-apiGetNamedResource name
-    = text $ fromStrict name
+apiGetResourceByKey :: Text -> ActionM ()
+apiGetResourceByKey path
+    = text $ fromStrict path
 
-apiInsertNamedResource :: Text -> ActionM ()
-apiInsertNamedResource path
-    = do let res = Resource path
-    	 _ <- liftIO $ sqlInsertResource res
-         text "INSERT"
+apiInsertResource :: ActionM ()
+apiInsertResource
+    = do res <- jsonData
+         key <- liftIO $ sqlInsertResource res
+         json Entity { entityKey = key, entityVal = res }
 
-apiDeleteNamedResource :: Text -> ActionM ()
-apiDeleteNamedResource _
-    = text "INSERT"
+apiDeleteResourceByKey :: Text -> ActionM ()
+apiDeleteResourceByKey keyText
+    = parseKey keyText $ \key ->
+        do numRows <- liftIO $ sqlDeleteResource key
+           if numRows == 1
+             then text "Resource deleted."
+             else status notFound404 >> text "Resource not found."
 
 sqlGetAllResourcesSummary :: IO [J.Value]
 sqlGetAllResourcesSummary
     = runSql $ do rows <- select $ from $ \resource ->
-                          return $ resource ^. ResourcePath
-                  return $ map asJSON rows
+                          return (resource ^. ResourceId, resource ^. ResourcePath)
+                  return $ map idAndPathAsJSON rows
 
-asJSON :: Sql.Value Text -> J.Value
-asJSON (Sql.Value path)
-    = object ["path" .= path]
+idAndPathAsJSON :: (Sql.Value (Key Resource), Sql.Value Text) -> J.Value
+idAndPathAsJSON (Sql.Value key, Sql.Value path)
+    = object ["id" .= key, "path" .= path]
 
 sqlInsertResource :: Resource -> IO (Key Resource)
 sqlInsertResource res
     = runSql $ insert res
+
+sqlDeleteResource :: ResourceId -> IO Int64
+sqlDeleteResource key
+    = runSql $ deleteCount $ from $ \resource ->
+               where_ (resource ^. ResourceId ==. val key)
