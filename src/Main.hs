@@ -18,7 +18,7 @@ import Schema                ( migrate )
 
 
 main :: IO ()
-main
-    = do port <- read <$> getEnv "PORT"
-         runSql $ runMigration migrate
-         scotty port routes
+main = do
+  port <- read <$> getEnv "PORT"
+  runSql $ runMigration migrate
+  scotty port routes

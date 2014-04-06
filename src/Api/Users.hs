@@ -19,10 +19,11 @@ import Database                ( runSql )
 
 
 apiGetUsers :: ActionM ()
-apiGetUsers
-    = json =<< liftIO sqlGetAllUsers
+apiGetUsers =
+  json =<< liftIO sqlGetAllUsers
 
 sqlGetAllUsers :: IO [User]
-sqlGetAllUsers
-    = runSql $ do users <- select $ from return
-                  return $ map entityVal users
+sqlGetAllUsers =
+  runSql $ do
+  	users <- select $ from return
+    return $ map entityVal users

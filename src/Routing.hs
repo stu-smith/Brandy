@@ -15,17 +15,17 @@ import Api.Resources  ( apiGetResources, apiGetResourceByKey
 
 
 routes :: ScottyM ()
-routes
-    = do get    rootPattern               $ html "ROOT"
+routes = do
+  get    root               $ html "ROOT"
 
-         get    userCollectionPattern       apiGetUsers
-         
-         get    resourceCollectionPattern   apiGetResources
-         get    resourceElementPattern    $ apiGetResourceByKey    =<< param "key"
-         post   resourceElementPattern      apiInsertResource
-         delete resourceElementPattern    $ apiDeleteResourceByKey =<< param "key"
+  get    userCollection       apiGetUsers
 
-  where rootPattern               = "/"
-        userCollectionPattern     = "/api/users"
-        resourceCollectionPattern = "/api/resources"
-        resourceElementPattern    = "/api/resources/:key"
+  get    resourceCollection   apiGetResources
+  get    resourceElement    $ apiGetResourceByKey    =<< param "key"
+  post   resourceElement      apiInsertResource
+  delete resourceElement    $ apiDeleteResourceByKey =<< param "key"
+
+    where root               = "/"
+          userCollection     = "/api/users"
+          resourceCollection = "/api/resources"
+          resourceElement    = "/api/resources/:key"

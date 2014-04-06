@@ -12,7 +12,7 @@ where
 
 import Data.Int                   ( Int64 )
 import Data.Aeson as J            ( Value, object, (.=) )
-import Data.Text                  ( Text )
+import Data.Text                  ( Text, pack )
 import Data.Text.Lazy             ( fromStrict )
 import Control.Monad.IO.Class     ( liftIO )
 import Web.Scotty                 ( ActionM, json, text, status, jsonData )
@@ -26,42 +26,45 @@ import ApiUtility                 ( parseKey )
 
 
 apiGetResources :: ActionM ()
-apiGetResources
-    = json =<< liftIO sqlGetAllResourcesSummary
+apiGetResources =
+  json =<< liftIO sqlGetAllResourcesSummary
 
 apiGetResourceByKey :: Text -> ActionM ()
-apiGetResourceByKey path
-    = text $ fromStrict path
+apiGetResourceByKey keyText =
+  parseKey keyText $ \key -> do
+    text $ fromStrict $ pack $ show key
 
 apiInsertResource :: ActionM ()
-apiInsertResource
-    = do res <- jsonData
-         key <- liftIO $ sqlInsertResource res
-         json Entity { entityKey = key, entityVal = res }
+apiInsertResource = do
+  res <- jsonData
+  key <- liftIO $ sqlInsertResource res
+  json Entity { entityKey = key, entityVal = res }
 
 apiDeleteResourceByKey :: Text -> ActionM ()
-apiDeleteResourceByKey keyText
-    = parseKey keyText $ \key ->
-        do numRows <- liftIO $ sqlDeleteResource key
-           if numRows == 1
-             then text "Resource deleted."
-             else status notFound404 >> text "Resource not found."
+apiDeleteResourceByKey keyText =
+  parseKey keyText $ \key -> do
+    numRows <- liftIO $ sqlDeleteResource key
+    if numRows == 1
+      then text "Resource deleted."
+      else status notFound404 >> text "Resource not found."
+
 
 sqlGetAllResourcesSummary :: IO [J.Value]
-sqlGetAllResourcesSummary
-    = runSql $ do rows <- select $ from $ \resource ->
-                          return (resource ^. ResourceId, resource ^. ResourcePath)
-                  return $ map idAndPathAsJSON rows
+sqlGetAllResourcesSummary =
+  runSql $ do
+    rows <- select $ from $ \resource ->
+            return (resource ^. ResourceId, resource ^. ResourcePath)
+    return $ map idAndPathAsJSON rows
 
 idAndPathAsJSON :: (Sql.Value (Key Resource), Sql.Value Text) -> J.Value
-idAndPathAsJSON (Sql.Value key, Sql.Value path)
-    = object ["id" .= key, "path" .= path]
+idAndPathAsJSON (Sql.Value key, Sql.Value path) =
+  object ["id" .= key, "path" .= path]
 
 sqlInsertResource :: Resource -> IO (Key Resource)
-sqlInsertResource res
-    = runSql $ insert res
+sqlInsertResource res =
+  runSql $ insert res
 
 sqlDeleteResource :: ResourceId -> IO Int64
-sqlDeleteResource key
-    = runSql $ deleteCount $ from $ \resource ->
-               where_ (resource ^. ResourceId ==. val key)
+sqlDeleteResource key =
+  runSql $ deleteCount $ from $ \resource ->
+           where_ (resource ^. ResourceId ==. val key)

@@ -18,5 +18,5 @@ import Database.Persist.Sqlite       ( runSqlite )
 
 runSql :: (MonadBaseControl IO m, MonadIO m)
        => SqlPersistT (NoLoggingT (ResourceT m)) a -> m a
-runSql
-    = runSqlite "brandy.sqlite3"
+runSql =
+  runSqlite "brandy.sqlite3"
