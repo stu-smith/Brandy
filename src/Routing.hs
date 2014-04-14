@@ -7,14 +7,15 @@ module Routing
 )
 where
 
-import Web.Scotty     ( ScottyM, get, post, delete, html, param )
+import Web.Scotty.Trans  ( get, post, delete, html, param )
 
-import Api.Users      ( apiGetUsers )
-import Api.Resources  ( apiGetResources, apiGetResourceByKey
-                      , apiInsertResource, apiDeleteResourceByKey )
+import Core              ( BrandyScottyM )
+import Api.Users         ( apiGetUsers )
+import Api.Resources     ( apiGetResources, apiGetResourceByKey
+                         , apiInsertResource, apiDeleteResourceByKey )
 
 
-routes :: ScottyM ()
+routes :: BrandyScottyM ()
 routes = do
   get    root               $ html "ROOT"
 

@@ -8,13 +8,15 @@ module ApiUtility
 where
 
 import Data.Int                   ( Int64 )
-import Web.Scotty                 ( ActionM, text, status )
+import Web.Scotty.Trans           ( text, status )
 import Data.Text                  ( Text )
 import Database.Persist           ( Key, KeyBackend(Key), toPersistValue )
 import Network.HTTP.Types.Status  ( badRequest400 )
 import Data.Text.Read             ( decimal )
 
-parseKey :: Text -> (Key a -> ActionM ()) -> ActionM ()
+import Core                       ( BrandyActionM )
+
+parseKey :: Text -> (Key a -> BrandyActionM ()) -> BrandyActionM ()
 parseKey key func =
   case parseInt64 key of
       Just k -> func k

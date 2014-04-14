@@ -10,20 +10,26 @@ module Api.Users
 )
 where
 
-import Control.Monad.IO.Class  ( liftIO )
-import Web.Scotty              ( ActionM, json )
-import Database.Esqueleto      ( select, from, entityVal )
+import Control.Monad.Trans   ( lift, liftIO )
+import Control.Monad.Reader  ( ask )
+import Data.Text as T        ( Text )
 
+import Web.Scotty.Trans      ( json )
+import Database.Esqueleto    ( select, from, entityVal )
+
+import Core                  ( BrandyActionM )
 import Schema
-import Database                ( runSql )
+import Database              ( runSql )
 
 
-apiGetUsers :: ActionM ()
-apiGetUsers =
-  json =<< liftIO sqlGetAllUsers
+apiGetUsers :: BrandyActionM ()
+apiGetUsers = do
+  conn <- lift ask
+  users <- liftIO $ sqlGetAllUsers conn
+  json users
 
-sqlGetAllUsers :: IO [User]
-sqlGetAllUsers =
-  runSql $ do
-  	users <- select $ from return
+sqlGetAllUsers :: T.Text -> IO [User]
+sqlGetAllUsers conn = do
+  runSql conn $ do
+    users <- select $ from return
     return $ map entityVal users

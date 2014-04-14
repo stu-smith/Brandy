@@ -20,6 +20,7 @@ executable Brandy
                        , bytestring
                        , transformers
                        , resourcet
+                       , mtl
                        , persistent
                        , persistent-template
                        , persistent-sqlite
@@ -32,6 +33,7 @@ executable Brandy
                        , http-types
                        , wai
                        , wai-test
+                       , warp
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
 
@@ -51,6 +53,7 @@ Test-Suite spec
                        , bytestring
                        , transformers
                        , resourcet
+                       , mtl
                        , persistent
                        , persistent-template
                        , persistent-sqlite
@@ -63,3 +66,4 @@ Test-Suite spec
                        , http-types
                        , wai
                        , wai-test
+                       , warp

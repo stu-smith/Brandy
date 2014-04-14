@@ -8,6 +8,7 @@ module Database
 )
 where
 
+import Data.Text                     ( Text )
 import Control.Monad.Trans.Control   ( MonadBaseControl )
 import Control.Monad.IO.Class        ( MonadIO )
 import Control.Monad.Logger          ( NoLoggingT )
@@ -17,6 +18,6 @@ import Database.Persist.Sqlite       ( runSqlite )
 
 
 runSql :: (MonadBaseControl IO m, MonadIO m)
-       => SqlPersistT (NoLoggingT (ResourceT m)) a -> m a
+       => Text -> SqlPersistT (NoLoggingT (ResourceT m)) a -> m a
 runSql =
-  runSqlite "brandy.sqlite3"
+  runSqlite
