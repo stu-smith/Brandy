@@ -35,7 +35,7 @@ apiGetResources = do
 
 apiGetResourceByKey :: Text -> BrandyActionM ()
 apiGetResourceByKey keyText =
-  parseKey keyText $ \key -> do
+  parseKey keyText $ \key ->
     text $ fromStrict $ pack $ show key
 
 apiInsertResource :: BrandyActionM ()

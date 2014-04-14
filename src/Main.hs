@@ -8,13 +8,9 @@ module Main
 where
 
 import Control.Applicative         ( (<$>) )
-import Control.Monad.Identity      ( runIdentity )
-import Control.Monad.Reader        ( Reader )
-import Control.Monad.Trans         ( liftIO )
-import Control.Monad.Trans.Reader  ( ReaderT(..), runReader )
+import Control.Monad.Trans.Reader  ( ReaderT(..), runReaderT )
 import Data.Text                   ( Text )
 import System.Environment          ( getEnv )
-import Web.Scotty                  ( scotty )
 import Database.Persist.Sql        ( runMigration )
 import Network.Wai.Handler.Warp    ( Port )
 import qualified Web.Scotty.Trans as T
@@ -33,4 +29,5 @@ main = do
   runScotty port file routes
 
 runScotty :: Port -> Text -> BrandyScottyM () -> IO ()
-runScotty port file = T.scottyT port ((\f -> runReader f file)) id
+runScotty port file =
+  T.scottyT port (`runReaderT` file) (`runReaderT` file)

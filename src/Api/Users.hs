@@ -29,7 +29,7 @@ apiGetUsers = do
   json users
 
 sqlGetAllUsers :: T.Text -> IO [User]
-sqlGetAllUsers conn = do
+sqlGetAllUsers conn =
   runSql conn $ do
     users <- select $ from return
     return $ map entityVal users

@@ -8,8 +8,6 @@ import qualified Network.Wai       as W
 import qualified Network.Wai.Test  as WT
 
 
-{-# LANGUAGE OverloadedStrings #-}
-
 get :: W.Application -> BS.ByteString -> IO WT.SResponse
 get app path =
   WT.runSession (WT.srequest (WT.SRequest req "")) app
