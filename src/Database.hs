@@ -8,16 +8,19 @@ module Database
 )
 where
 
-import Data.Text                     ( Text )
-import Control.Monad.Trans.Control   ( MonadBaseControl )
-import Control.Monad.IO.Class        ( MonadIO )
+import Control.Monad.Reader          ( ask )
+import Control.Monad.Trans           ( lift )
 import Control.Monad.Logger          ( NoLoggingT )
 import Control.Monad.Trans.Resource  ( ResourceT )
+import Control.Monad.Trans.Control   ( MonadBaseControl )
+import Control.Monad.IO.Class        ( MonadIO )
 import Database.Persist.Sql          ( SqlPersistT )
 import Database.Persist.Sqlite       ( runSqlite )
 
+import Core                          ( DatabaseEnvironmentT )
 
 runSql :: (MonadBaseControl IO m, MonadIO m)
-       => Text -> SqlPersistT (NoLoggingT (ResourceT m)) a -> m a
-runSql =
-  runSqlite
+       => SqlPersistT (NoLoggingT (ResourceT m)) a -> DatabaseEnvironmentT m a
+runSql action = do
+  conn <- ask
+  lift $ runSqlite conn action

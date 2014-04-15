@@ -25,7 +25,7 @@ main :: IO ()
 main = do
   port <- read <$> getEnv "PORT"
   let file = "brandy.sqlite3"
-  runSql file $ runMigration migrate
+  runReaderT (runSql $ runMigration migrate) file
   runScotty port file routes
 
 runScotty :: Port -> Text -> BrandyScottyM () -> IO ()

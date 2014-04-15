@@ -1,7 +1,8 @@
 
 module Core
 (
-  BrandyScottyM
+  DatabaseEnvironmentT
+, BrandyScottyM
 , BrandyActionM
 )
 where
@@ -12,5 +13,6 @@ import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 
 
-type BrandyScottyM = ScottyT TL.Text (ReaderT T.Text IO)
-type BrandyActionM = ActionT TL.Text (ReaderT T.Text IO)
+type DatabaseEnvironmentT = ReaderT T.Text
+type BrandyScottyM = ScottyT TL.Text (DatabaseEnvironmentT IO)
+type BrandyActionM = ActionT TL.Text (DatabaseEnvironmentT IO)

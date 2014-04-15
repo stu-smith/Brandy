@@ -11,13 +11,10 @@ module Api.Users
 where
 
 import Control.Monad.Trans   ( lift )
-import Control.Monad.Reader  ( ReaderT, ask )
-import Data.Text as T        ( Text )
-
 import Web.Scotty.Trans      ( json )
 import Database.Esqueleto    ( select, from, entityVal )
 
-import Core                  ( BrandyActionM )
+import Core                  ( BrandyActionM, DatabaseEnvironmentT )
 import Schema
 import Database              ( runSql )
 
@@ -27,9 +24,8 @@ apiGetUsers = do
   users <- lift sqlGetAllUsers
   json users
 
-sqlGetAllUsers :: ReaderT T.Text IO [User]
-sqlGetAllUsers = do
-  conn <- ask
-  runSql conn $ do
+sqlGetAllUsers :: DatabaseEnvironmentT IO [User]
+sqlGetAllUsers =
+  runSql $ do
     users <- select $ from return
     return $ map entityVal users
