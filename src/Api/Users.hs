@@ -10,8 +10,8 @@ module Api.Users
 )
 where
 
-import Control.Monad.Trans   ( lift, liftIO )
-import Control.Monad.Reader  ( ask )
+import Control.Monad.Trans   ( lift )
+import Control.Monad.Reader  ( ReaderT, ask )
 import Data.Text as T        ( Text )
 
 import Web.Scotty.Trans      ( json )
@@ -24,12 +24,12 @@ import Database              ( runSql )
 
 apiGetUsers :: BrandyActionM ()
 apiGetUsers = do
-  conn <- lift ask
-  users <- liftIO $ sqlGetAllUsers conn
+  users <- lift sqlGetAllUsers
   json users
 
-sqlGetAllUsers :: T.Text -> IO [User]
-sqlGetAllUsers conn =
+sqlGetAllUsers :: ReaderT T.Text IO [User]
+sqlGetAllUsers = do
+  conn <- ask
   runSql conn $ do
     users <- select $ from return
     return $ map entityVal users

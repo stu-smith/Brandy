@@ -23,7 +23,7 @@ spec = do
 
   describe "get single resource" $ do
     it "should give 400 for bad key" $ do
-      app <- liftIO $ scottyApp "test.sqlite" routes
+      app <- liftIO $ scottyApp "test.sqlite3" routes
       status <- WT.simpleStatus <$> app `get` "/api/resources/bad-key"
       status `shouldBe` badRequest400
 
