@@ -34,6 +34,7 @@ executable Brandy
                        , wai
                        , wai-test
                        , warp
+                       , temporary
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
 
@@ -67,3 +68,4 @@ Test-Suite spec
                        , wai
                        , wai-test
                        , warp
+                       , temporary

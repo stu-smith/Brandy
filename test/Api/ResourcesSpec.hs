@@ -1,31 +1,31 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Api.ResourcesSpec where
+module Api.ResourcesSpec
+(
+  spec
+)
+where
 
-import Control.Applicative                 ( (<$>) )
-import Control.Monad.Trans.Reader          ( runReaderT )
-import Data.Text                           ( Text )
-import Control.Monad.Trans                 ( liftIO )
-import Network.Wai                         ( Application )
-import Test.Hspec
-import Network.HTTP.Types.Status
-import qualified Web.Scotty.Trans  as ST
-import qualified Network.Wai.Test  as WT
+import Control.Applicative        ( (<$>) )
+import Network.HTTP.Types.Status  ( badRequest400, notFound404 )
+import Network.Wai.Test           ( simpleStatus )
+import Test.Hspec                 ( Spec, describe, it, shouldBe )
 
-import Routing
-import Utility
-import Core
+import Utility                    ( runTest, get )
 
 
 spec :: Spec
 spec = do
 
   describe "get single resource" $ do
-    it "should give 400 for bad key" $ do
-      app <- liftIO $ scottyApp "test.sqlite3" routes
-      status <- WT.simpleStatus <$> app `get` "/api/resources/bad-key"
-      status `shouldBe` badRequest400
 
-scottyApp :: Text -> BrandyScottyM () -> IO Application
-scottyApp file = ST.scottyAppT (`runReaderT` file) (`runReaderT` file)
+    it "should give 400 for bad key" $
+      runTest $ \app -> do
+        status <- simpleStatus <$> app `get` "/api/resources/bad-key"
+        status `shouldBe` badRequest400
+
+    it "should give 404 for missing key" $
+      runTest $ \app -> do
+        status <- simpleStatus <$> app `get` "/api/resources/123"
+        status `shouldBe` notFound404
