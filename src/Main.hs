@@ -23,11 +23,11 @@ import Schema                       ( migrate )
 
 main :: IO ()
 main = do
-  port <- read <$> getEnv "PORT"
-  let file = "brandy.sqlite3"
-  runReaderT (runSql $ runMigration migrate) file
-  runScotty port file routes
+    port <- read <$> getEnv "PORT"
+    let file = "brandy.sqlite3"
+    runReaderT (runSql $ runMigration migrate) file
+    runScotty port file routes
 
 runScotty :: Port -> Text -> BrandyScottyM () -> IO ()
 runScotty port file =
-  T.scottyT port (`runReaderT` file) (`runReaderT` file)
+    T.scottyT port (`runReaderT` file) (`runReaderT` file)

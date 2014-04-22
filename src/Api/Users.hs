@@ -7,25 +7,29 @@
 module Api.Users
 (
   apiGetUsers
+, apiGetUserByKey
 )
 where
 
-import Control.Monad.Trans   ( lift )
-import Web.Scotty.Trans      ( json )
-import Database.Esqueleto    ( select, from, entityVal )
+import Control.Monad.Trans        ( lift )
+import qualified Data.Text as T   ( Text )
+import Network.HTTP.Types.Status  ( notFound404 )
+import Web.Scotty.Trans           ( json, text, status )
 
-import Core                  ( BrandyActionM, DatabaseEnvironmentT )
-import Schema
-import Database              ( runSql )
+import ApiUtility                 ( parseKey )
+import Core                       ( BrandyActionM )
+import DataAccess.Users           ( getAllUsers, getUserByKey )
 
 
 apiGetUsers :: BrandyActionM ()
 apiGetUsers = do
-  users <- lift sqlGetAllUsers
-  json users
+    users <- lift getAllUsers
+    json users
 
-sqlGetAllUsers :: DatabaseEnvironmentT IO [User]
-sqlGetAllUsers =
-  runSql $ do
-    users <- select $ from return
-    return $ map entityVal users
+apiGetUserByKey :: T.Text -> BrandyActionM ()
+apiGetUserByKey keyText =
+    parseKey keyText $ \key -> do
+        maybeUser <- lift $ getUserByKey key
+        case maybeUser of
+            Just user -> json user
+            Nothing   -> status notFound404 >> text "User not found."

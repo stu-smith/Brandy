@@ -18,18 +18,18 @@ import Database.Persist.TH  ( share, mkPersist, sqlOnlySettings, mkMigrate, pers
 
 share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
 
-  User json
-    email        Text
-    displayName  Text
-    deriving Show Read Eq Ord
+    User
+        email        Text
+        displayName  Text
+      deriving Show Read Eq Ord
 
-  Resource json
-    path         Text
-    createdBy    UserId
-    createdAt    UTCTime
-    public       Bool
-    contentType  Text
-    content      Text
-    deriving Show Read Eq Ord
+    Resource json
+        path         Text
+        createdBy    UserId
+        createdAt    UTCTime
+        public       Bool
+        contentType  Text
+        content      Text
+      deriving Show Read Eq Ord
 
 |]

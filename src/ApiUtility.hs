@@ -18,15 +18,16 @@ import Core                       ( BrandyActionM )
 
 parseKey :: Text -> (Key a -> BrandyActionM ()) -> BrandyActionM ()
 parseKey key func =
-  case parseInt64 key of
-      Just k -> func k
-      _      -> status badRequest400 >> text "Invalid ID."
+    case parseInt64 key of
+        Just k -> func k
+        _      -> status badRequest400 >> text "Invalid ID."
 
 parseInt64 :: Text -> Maybe (Key a)
 parseInt64 s =
-  case decimal s of
-      Right (v, "") -> Just $ mkKey v
-      _             -> Nothing
+    case decimal s of
+        Right (v, "") -> Just $ mkKey v
+        _             -> Nothing
 
 mkKey :: Int64 -> Key a
-mkKey = Key . toPersistValue
+mkKey =
+    Key . toPersistValue

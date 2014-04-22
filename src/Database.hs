@@ -23,5 +23,5 @@ import Core                          ( DatabaseEnvironmentT )
 runSql :: (MonadBaseControl IO m, MonadIO m)
        => SqlPersistT (NoLoggingT (ResourceT m)) a -> DatabaseEnvironmentT m a
 runSql action = do
-  conn <- ask
-  lift $ runSqlite conn action
+    conn <- ask
+    lift $ runSqlite conn action
