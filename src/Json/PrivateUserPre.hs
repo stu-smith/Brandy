@@ -1,9 +1,9 @@
 
 {-# LANGUAGE DeriveGeneric #-}
 
-module Json.PrivateUser
+module Json.PrivateUserPre
 (
-  PrivateUser(..)
+  PrivateUserPre(..)
 )
 where
 
@@ -12,12 +12,11 @@ import Data.Text as T  ( Text )
 import GHC.Generics    ( Generic )
 
 
-data PrivateUser = PrivateUser
-    { id          :: T.Text
-    , displayName :: T.Text
+data PrivateUserPre = PrivateUserPre
+    { displayName :: T.Text
     , email       :: T.Text
     }
   deriving (Show, Generic)
 
-instance ToJSON PrivateUser
-instance FromJSON PrivateUser
+instance ToJSON PrivateUserPre
+instance FromJSON PrivateUserPre

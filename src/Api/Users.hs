@@ -1,24 +1,26 @@
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
 
 module Api.Users
 (
   apiGetUsers
 , apiGetUserByKey
+, apiAddUser
 )
 where
 
 import Control.Monad.Trans        ( lift )
-import qualified Data.Text as T   ( Text )
+import qualified Data.Text as T   ( Text, pack )
 import Network.HTTP.Types.Status  ( notFound404 )
-import Web.Scotty.Trans           ( json, text, status )
+import Web.Scotty.Trans           ( json, text, status, jsonData )
 
 import ApiUtility                 ( parseKey )
 import Core                       ( BrandyActionM )
-import DataAccess.Users           ( getAllUsers, getUserByKey )
+import DataAccess.Users           ( getAllUsers, getUserByKey, insertUser )
+import qualified Json.PrivateUser as PrivateUser
+                                  ( PrivateUser(..) )
+import qualified Json.PrivateUserPre as PrivateUserPre
+                                  ( PrivateUserPre(..) )
 
 
 apiGetUsers :: BrandyActionM ()
@@ -33,3 +35,13 @@ apiGetUserByKey keyText =
         case maybeUser of
             Just user -> json user
             Nothing   -> status notFound404 >> text "User not found."
+
+apiAddUser :: BrandyActionM ()
+apiAddUser = do
+    userPre <- jsonData
+    key <- lift $ insertUser userPre
+    json PrivateUser.PrivateUser
+        { PrivateUser.id          = T.pack $ show key
+        , PrivateUser.displayName = PrivateUserPre.displayName userPre
+        , PrivateUser.email       = PrivateUserPre.email userPre
+        }

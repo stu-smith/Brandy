@@ -1,3 +1,4 @@
+
 {-# LANGUAGE DeriveGeneric #-}
 
 module Json.PublicUserSummary

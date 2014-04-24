@@ -16,7 +16,7 @@ executable Brandy
   other-modules:         ApiUtility, Database, Routing, Schema
                        , Api.Users, Api.Resources
                        , DataAccess.Users
-                       , Json.PrivateUser, Json.PublicUserSummary
+                       , Json.PrivateUser, Json.PrivateUserPre, Json.PublicUserSummary
   build-depends:         base
                        , text
                        , time
@@ -38,6 +38,7 @@ executable Brandy
                        , wai-test
                        , warp
                        , temporary
+                       , conduit
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
 
@@ -72,3 +73,4 @@ Test-Suite spec
                        , wai-test
                        , warp
                        , temporary
+                       , conduit
