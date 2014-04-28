@@ -37,8 +37,8 @@ getUserByKey key =
 
 insertUser :: PrivateUserPre -> DatabaseEnvironmentT IO UserId
 insertUser (PrivateUserPre uDisplayName uEmail) =
-    runSql $ insert $ User { userDisplayName = uDisplayName
-                           , userEmail       = uEmail }
+    runSql $ insert User { userDisplayName = uDisplayName
+                         , userEmail       = uEmail }
 
 fromPublic :: (Value UserId, Value T.Text) -> PublicUserSummary
 fromPublic (Value uId, Value uDisplayName) =

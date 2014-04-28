@@ -56,12 +56,16 @@ post app path payload =
 
 jsonRequest :: Request
 jsonRequest =
-    defaultRequest { requestHeaders = [(hAccept, "application/json")] }
+    defaultRequest
+        { requestHeaders = [(hAccept, "application/json")]
+        }
 
 getRequest :: Request
 getRequest = jsonRequest
 
 postRequest :: BS.ByteString -> Request
 postRequest payload =
-    jsonRequest { requestMethod = methodPost
-                , requestBody   = yield payload }
+    jsonRequest
+        { requestMethod = methodPost
+        , requestBody   = yield payload
+        }

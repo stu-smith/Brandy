@@ -16,7 +16,7 @@ data PrivateUserPre = PrivateUserPre
     { displayName :: T.Text
     , email       :: T.Text
     }
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 instance ToJSON PrivateUserPre
 instance FromJSON PrivateUserPre

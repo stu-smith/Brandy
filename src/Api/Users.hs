@@ -11,10 +11,10 @@ where
 
 import Control.Monad.Trans        ( lift )
 import qualified Data.Text as T   ( Text, pack )
-import Network.HTTP.Types.Status  ( notFound404 )
-import Web.Scotty.Trans           ( json, text, status, jsonData )
+import Network.HTTP.Types.Status  ( badRequest400, notFound404 )
+import Web.Scotty.Trans           ( json, text, status )
 
-import ApiUtility                 ( parseKey )
+import ApiUtility                 ( parseKey, handleJson )
 import Core                       ( BrandyActionM )
 import DataAccess.Users           ( getAllUsers, getUserByKey, insertUser )
 import qualified Json.PrivateUser as PrivateUser
@@ -33,15 +33,17 @@ apiGetUserByKey keyText =
     parseKey keyText $ \key -> do
         maybeUser <- lift $ getUserByKey key
         case maybeUser of
-            Just user -> json user
             Nothing   -> status notFound404 >> text "User not found."
+            Just user -> json user
 
 apiAddUser :: BrandyActionM ()
-apiAddUser = do
-    userPre <- jsonData
-    key <- lift $ insertUser userPre
-    json PrivateUser.PrivateUser
-        { PrivateUser.id          = T.pack $ show key
-        , PrivateUser.displayName = PrivateUserPre.displayName userPre
-        , PrivateUser.email       = PrivateUserPre.email userPre
-        }
+apiAddUser =
+    handleJson
+        (status badRequest400 >> text "Invalid request body.")
+        $ \userPre -> do
+            key <- lift $ insertUser userPre
+            json PrivateUser.PrivateUser
+                { PrivateUser.id          = T.pack $ show key
+                , PrivateUser.displayName = PrivateUserPre.displayName userPre
+                , PrivateUser.email       = PrivateUserPre.email userPre
+                }
