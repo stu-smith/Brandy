@@ -1,7 +1,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 
-module Utility
+module TestUtility
 (
   runTest
 , get
@@ -51,8 +51,10 @@ get app path =
 
 post :: (ToJSON a) => Application -> BS.ByteString -> a -> IO SResponse
 post app path payload =
-    runSession (srequest (SRequest req "")) app
-  where req = setRawPathInfo (postRequest $ BSL.toStrict $ encode payload) path
+    runSession (srequest sreq) app
+  where req  = setRawPathInfo (postRequest $ BSL.toStrict body) path
+        sreq = SRequest req body
+        body = encode payload
 
 jsonRequest :: Request
 jsonRequest =

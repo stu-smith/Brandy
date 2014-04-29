@@ -17,7 +17,7 @@ data PrivateUser = PrivateUser
     , displayName :: T.Text
     , email       :: T.Text
     }
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 instance ToJSON PrivateUser
 instance FromJSON PrivateUser

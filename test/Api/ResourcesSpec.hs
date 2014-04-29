@@ -12,7 +12,7 @@ import Network.HTTP.Types.Status  ( badRequest400, notFound404 )
 import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe )
 
-import Utility                    ( runTest, get )
+import TestUtility                ( runTest, get )
 
 
 spec :: Spec

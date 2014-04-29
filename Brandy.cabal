@@ -39,6 +39,7 @@ executable Brandy
                        , warp
                        , temporary
                        , conduit
+                       , path-pieces
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
 
@@ -74,3 +75,4 @@ Test-Suite spec
                        , warp
                        , temporary
                        , conduit
+                       , path-pieces

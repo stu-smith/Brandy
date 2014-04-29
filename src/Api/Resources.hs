@@ -16,13 +16,13 @@ import qualified Data.Text as T        ( Text, pack )
 import qualified Data.Text.Lazy as TL  ( fromStrict )
 import Control.Monad.Trans             ( lift )
 import Web.Scotty.Trans                ( json, text, status, jsonData )
-import Network.HTTP.Types.Status       ( notFound404 )
+import Network.HTTP.Types.Status       ( badRequest400, notFound404 )
 import Database.Esqueleto as Sql       ( Value(..), select, deleteCount, from, where_, (^.), (==.), val )
 import Database.Persist                ( Key, Entity(..), insert )
 
 import Schema
 import Database                        ( runSql )
-import ApiUtility                      ( parseKey )
+import ApiUtility                      ( readKey )
 import Core                            ( DatabaseEnvironmentT, BrandyActionM )
 
 
@@ -33,8 +33,9 @@ apiGetResources = do
 
 apiGetResourceByKey :: T.Text -> BrandyActionM ()
 apiGetResourceByKey keyText =
-    parseKey keyText $ \key ->
-        text $ TL.fromStrict $ T.pack $ show key
+    case readKey keyText of
+        Nothing  -> status badRequest400 >> text "Invalid ID."
+        Just key -> text $ TL.fromStrict $ T.pack $ show key
 
 apiInsertResource :: BrandyActionM ()
 apiInsertResource = do
@@ -44,11 +45,13 @@ apiInsertResource = do
 
 apiDeleteResourceByKey :: T.Text -> BrandyActionM ()
 apiDeleteResourceByKey keyText =
-    parseKey keyText $ \key -> do
-        numRows <- lift $ sqlDeleteResource key
-        if numRows == 1
-            then text "Resource deleted."
-            else status notFound404 >> text "Resource not found."
+    case readKey keyText of
+        Nothing  -> status badRequest400 >> text "Invalid ID."
+        Just key -> do
+            numRows <- lift $ sqlDeleteResource key
+            if numRows == 1
+                then text "Resource deleted."
+                else status notFound404 >> text "Resource not found."
 
 
 sqlGetAllResourcesSummary :: DatabaseEnvironmentT IO [J.Value]

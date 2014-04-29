@@ -7,10 +7,10 @@ module Json.PrivateUserPreSpec
 )
 where
 
-import Data.Aeson  ( encode, decode )
-import Test.Hspec  ( Spec, describe, it, shouldBe )
+import Data.Aeson           ( encode, decode )
+import Test.Hspec           ( Spec, describe, it, shouldBe )
 
-import Json.PrivateUserPre           ( PrivateUserPre(..) )
+import Json.PrivateUserPre  ( PrivateUserPre(..) )
 
 
 spec :: Spec

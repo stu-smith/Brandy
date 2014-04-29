@@ -16,7 +16,7 @@ import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy 
 
 import Json.PrivateUserPre        ( PrivateUserPre(..) )
 import Json.PublicUserSummary     ( PublicUserSummary )
-import Utility                    ( runTest, get, post )
+import TestUtility                ( runTest, get, post )
 
 
 spec :: Spec
