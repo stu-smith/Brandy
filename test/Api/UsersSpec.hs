@@ -66,3 +66,21 @@ spec = do
                 let payload = PrivateUserPre "Display Name" "email@example.com"
                 status <- simpleStatus <$> (app `post` "/api/users") payload
                 status `shouldBe` ok200
+
+        it "should give 400 for duplicate email" $
+            runTest $ \app -> do
+                let payload1 = PrivateUserPre "Display Name 1" "email@example.com"
+                status1 <- simpleStatus <$> (app `post` "/api/users") payload1
+                status1 `shouldBe` ok200
+                let payload2 = PrivateUserPre "Display Name 2" "email@example.com"
+                status2 <- simpleStatus <$> (app `post` "/api/users") payload2
+                status2 `shouldBe` badRequest400
+
+        it "should give 400 for duplicate displayName" $
+            runTest $ \app -> do
+                let payload1 = PrivateUserPre "Display Name" "email1@example.com"
+                status1 <- simpleStatus <$> (app `post` "/api/users") payload1
+                status1 `shouldBe` ok200
+                let payload2 = PrivateUserPre "Display Name" "email2@example.com"
+                status2 <- simpleStatus <$> (app `post` "/api/users") payload2
+                status2 `shouldBe` badRequest400

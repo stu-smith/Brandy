@@ -12,7 +12,7 @@ where
 import Control.Applicative        ( (<$>) )
 import Control.Monad.Trans        ( lift )
 import Data.Aeson                 ( decode )
-import qualified Data.Text as T   ( Text )
+import qualified Data.Text as T   ( Text, null )
 import Network.HTTP.Types.Status  ( badRequest400, notFound404 )
 import Web.Scotty.Trans           ( json, text, status, body )
 
@@ -43,12 +43,18 @@ apiGetUserByKey keyText =
 apiAddUser :: BrandyActionM ()
 apiAddUser = do
     maybeUserPre <- decode <$> body
-    case maybeUserPre of
-        Nothing      -> status badRequest400 >> text "Invalid request body."
-        Just userPre -> do
-            key <- lift $ insertUser userPre
-            json PrivateUser.PrivateUser
-                { PrivateUser.id          = showKey key
-                , PrivateUser.displayName = PrivateUserPre.displayName userPre
-                , PrivateUser.email       = PrivateUserPre.email userPre
-                }
+    validate maybeUserPre $ \userPre -> do
+        key <- lift $ insertUser userPre
+        json PrivateUser.PrivateUser
+            { PrivateUser.id          = showKey key
+            , PrivateUser.displayName = PrivateUserPre.displayName userPre
+            , PrivateUser.email       = PrivateUserPre.email userPre
+            }
+  where validate Nothing _       = status badRequest400 >> text "Invalid request body."
+        validate (Just userPre@(PrivateUserPre.PrivateUserPre displayName email)) success
+            | T.null displayName = status badRequest400 >> text "Missing displayName."
+            | T.null email       = status badRequest400 >> text "Missing email."
+            | otherwise          = success userPre
+
+-- TODO:
+-- http://stackoverflow.com/questions/19563293/transparent-error-handling

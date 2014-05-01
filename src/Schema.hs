@@ -21,6 +21,8 @@ share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
     User
         email        Text
         displayName  Text
+        UniqueUserEmail        email
+        UniqueUserDisplayName  displayName
       deriving Show Read Eq Ord
 
     Resource json
@@ -30,6 +32,7 @@ share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
         public       Bool
         contentType  Text
         content      Text
+        UniqueResourcePath  path
       deriving Show Read Eq Ord
 
 |]
