@@ -40,6 +40,7 @@ executable Brandy
                        , temporary
                        , conduit
                        , path-pieces
+                       , either
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
 
@@ -76,3 +77,4 @@ Test-Suite spec
                        , temporary
                        , conduit
                        , path-pieces
+                       , either

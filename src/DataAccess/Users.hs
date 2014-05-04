@@ -12,7 +12,7 @@ where
 import Control.Applicative                          ( (<$>) )
 import Data.Text as T                               ( Text, pack )
 import Database.Esqueleto                           ( Value(..), select, from, (^.) )
-import Database.Persist                             ( get, insert )
+import Database.Persist                             ( get, insertUnique )
 
 import Core                                         ( DatabaseEnvironmentT )
 import Database                                     ( runSql )
@@ -35,10 +35,10 @@ getUserByKey key =
         maybeUser <- get key
         return $ fromPrivate key <$> maybeUser
 
-insertUser :: PrivateUserPre -> DatabaseEnvironmentT IO UserId
+insertUser :: PrivateUserPre -> DatabaseEnvironmentT IO (Maybe UserId)
 insertUser (PrivateUserPre uDisplayName uEmail) =
-    runSql $ insert User { userDisplayName = uDisplayName
-                         , userEmail       = uEmail }
+    runSql $ insertUnique User { userDisplayName = uDisplayName
+                               , userEmail       = uEmail }
 
 fromPublic :: (Value UserId, Value T.Text) -> PublicUserSummary
 fromPublic (Value uId, Value uDisplayName) =

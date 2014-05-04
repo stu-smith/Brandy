@@ -10,7 +10,7 @@ where
 import Control.Applicative        ( (<$>) )
 import Data.Aeson                 ( decode )
 import Data.Maybe                 ( fromJust )
-import Network.HTTP.Types.Status  ( ok200, badRequest400, notFound404 )
+import Network.HTTP.Types.Status  ( ok200, badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus, simpleBody )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
@@ -67,20 +67,20 @@ spec = do
                 status <- simpleStatus <$> (app `post` "/api/users") payload
                 status `shouldBe` ok200
 
-        it "should give 400 for duplicate email" $
+        it "should give 409 for duplicate email" $
             runTest $ \app -> do
                 let payload1 = PrivateUserPre "Display Name 1" "email@example.com"
                 status1 <- simpleStatus <$> (app `post` "/api/users") payload1
                 status1 `shouldBe` ok200
                 let payload2 = PrivateUserPre "Display Name 2" "email@example.com"
                 status2 <- simpleStatus <$> (app `post` "/api/users") payload2
-                status2 `shouldBe` badRequest400
+                status2 `shouldBe` conflict409
 
-        it "should give 400 for duplicate displayName" $
+        it "should give 409 for duplicate displayName" $
             runTest $ \app -> do
                 let payload1 = PrivateUserPre "Display Name" "email1@example.com"
                 status1 <- simpleStatus <$> (app `post` "/api/users") payload1
                 status1 `shouldBe` ok200
                 let payload2 = PrivateUserPre "Display Name" "email2@example.com"
                 status2 <- simpleStatus <$> (app `post` "/api/users") payload2
-                status2 `shouldBe` badRequest400
+                status2 `shouldBe` conflict409
