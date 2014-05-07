@@ -9,20 +9,20 @@ module Api.Users
 )
 where
 
-import Control.Applicative        ( (<$>) )
-import Control.Monad.Trans        ( lift )
-import Data.Aeson                 ( decode )
-import qualified Data.Text as T   ( Text, null )
-import Network.HTTP.Types.Status  ( badRequest400, notFound404, conflict409 )
-import Web.Scotty.Trans           ( json, text, status, body )
+import Control.Applicative         ( (<$>) )
+import Control.Monad.Trans         ( lift )
+import Data.Aeson                  ( decode )
+import qualified Data.Text as T    ( Text, null )
+import Network.HTTP.Types.Status   ( badRequest400, notFound404, conflict409 )
+import Web.Scotty.Trans            ( json, text, status, body )
 
-import ApiUtility                 ( readKey, showKey )
-import Core                       ( BrandyActionM )
-import DataAccess.Users           ( getAllUsers, getUserByKey, insertUser )
+import ApiUtility                  ( readKey, showKey, apiFail, runApi )
+import Core                        ( BrandyActionM )
+import DataAccess.Users            ( getAllUsers, getUserByKey, insertUser )
 import qualified Json.PrivateUser as PU
-                                  ( PrivateUser(..) )
+                                   ( PrivateUser(..) )
 import qualified Json.PrivateUserPre as PUP
-                                  ( PrivateUserPre(..) )
+                                   ( PrivateUserPre(..) )
 
 
 apiGetUsers :: BrandyActionM ()
@@ -41,20 +41,20 @@ apiGetUserByKey keyText =
                 Just user -> json user
 
 apiAddUser :: BrandyActionM ()
-apiAddUser = do
-    maybeUserPre <- decode <$> body
-    validate maybeUserPre $ \userPre -> do
-        maybeKey <- lift $ insertUser userPre
-        case maybeKey of
-            Nothing -> status conflict409 >> text "Already in use: displayName or email."
-            Just key -> do
-                json PU.PrivateUser
-                    { PU.id          = showKey key
-                    , PU.displayName = PUP.displayName userPre
-                    , PU.email       = PUP.email userPre
-                    }
-  where validate Nothing _       = status badRequest400 >> text "Invalid request body."
-        validate (Just userPre@(PUP.PrivateUserPre displayName email)) success
-            | T.null displayName = status badRequest400 >> text "Missing displayName."
-            | T.null email       = status badRequest400 >> text "Missing email."
-            | otherwise          = success userPre
+apiAddUser = runApi $ do
+    maybeUserPre <- lift $ decode <$> body
+    userPre      <- validate maybeUserPre
+    maybeKey     <- lift $ lift $ insertUser userPre
+    key          <- handleInsert maybeKey
+    return PU.PrivateUser
+                { PU.id          = showKey key
+                , PU.displayName = PUP.displayName userPre
+                , PU.email       = PUP.email userPre
+                }
+  where validate Nothing         = apiFail badRequest400 "Invalid request body."
+        validate (Just userPre@(PUP.PrivateUserPre displayName email))
+            | T.null displayName = apiFail badRequest400 "Missing displayName."
+            | T.null email       = apiFail badRequest400 "Missing email."
+            | otherwise          = return userPre
+        handleInsert Nothing     = apiFail conflict409 "Already in use."
+        handleInsert (Just k)    = return k
