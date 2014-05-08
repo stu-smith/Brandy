@@ -3,14 +3,15 @@
 
 module ApiUtility
 (
-  readKey
+  readKeyOld
+, readKey
 , showKey
 , apiFail
 , runApi
 )
 where
 
-import Control.Monad.Trans.Either  ( EitherT, runEitherT, left )
+import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
 import Data.Aeson                  ( ToJSON )
 import Data.Int                    ( Int64 )
 import qualified Data.Text as T
@@ -19,18 +20,24 @@ import qualified Data.Text.Lazy as TL
                                    ( Text )
 import Database.Persist            ( Key, KeyBackend(Key), toPersistValue )
 import Data.Text.Read              ( decimal )
-import Network.HTTP.Types.Status   ( Status )
+import Network.HTTP.Types.Status   ( Status, badRequest400 )
 import Web.PathPieces              ( toPathPiece )
 import Web.Scotty.Trans            ( json, text, status )
 
 import Core                        ( ApiError(..), BrandyActionM )  
 
 
-readKey :: T.Text -> Maybe (Key a)
-readKey s =
+readKeyOld :: T.Text -> Maybe (Key a)
+readKeyOld s =
     case decimal s of
         Right (v, "") -> Just $ mkKey v
         _             -> Nothing
+
+readKey :: Monad m => T.Text -> EitherT ApiError m (Key a)
+readKey s =
+    case decimal s of
+        Right (v, "") -> right $ mkKey v
+        _             -> left $ ApiError badRequest400 "Invalid key."
 
 showKey :: Key a -> T.Text
 showKey (Key v) =

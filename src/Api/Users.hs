@@ -14,7 +14,7 @@ import Control.Monad.Trans         ( lift )
 import Data.Aeson                  ( decode )
 import qualified Data.Text as T    ( Text, null )
 import Network.HTTP.Types.Status   ( badRequest400, notFound404, conflict409 )
-import Web.Scotty.Trans            ( json, text, status, body )
+import Web.Scotty.Trans            ( body )
 
 import ApiUtility                  ( readKey, showKey, apiFail, runApi )
 import Core                        ( BrandyActionM )
@@ -26,19 +26,17 @@ import qualified Json.PrivateUserPre as PUP
 
 
 apiGetUsers :: BrandyActionM ()
-apiGetUsers = do
-    users <- lift getAllUsers
-    json users
+apiGetUsers = runApi $
+    lift $ lift getAllUsers
 
 apiGetUserByKey :: T.Text -> BrandyActionM ()
-apiGetUserByKey keyText =
-    case readKey keyText of
-        Nothing  -> status badRequest400 >> text "Invalid ID."
-        Just key -> do
-            maybeUser <- lift $ getUserByKey key
-            case maybeUser of
-                Nothing   -> status notFound404 >> text "User not found."
-                Just user -> json user
+apiGetUserByKey keyText = runApi $ do
+    key       <- readKey keyText
+    maybeUser <- lift $ lift $ getUserByKey key
+    user      <- handleGet maybeUser
+    return user
+  where handleGet Nothing  = apiFail notFound404 "User not found."
+        handleGet (Just u) = return u
 
 apiAddUser :: BrandyActionM ()
 apiAddUser = runApi $ do

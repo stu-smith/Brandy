@@ -16,9 +16,9 @@ import qualified Data.Text.Lazy as TL
                                   ( Text )
 
 
-type DatabaseEnvironmentT = ReaderT T.Text
-type BrandyScottyM = ScottyT TL.Text (DatabaseEnvironmentT IO)
-type BrandyActionM = ActionT TL.Text (DatabaseEnvironmentT IO)
+type DatabaseEnvironmentT = ReaderT T.Text IO
+type BrandyScottyM = ScottyT TL.Text DatabaseEnvironmentT
+type BrandyActionM = ActionT TL.Text DatabaseEnvironmentT
 
 data ApiError = ApiError
     { httpStatus :: Status

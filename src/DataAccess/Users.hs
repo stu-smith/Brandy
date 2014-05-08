@@ -22,20 +22,20 @@ import Json.PrivateUserPre as PrivateUserPre        ( PrivateUserPre(..) )
 import Schema
 
 
-getAllUsers :: DatabaseEnvironmentT IO [PublicUserSummary]
+getAllUsers :: DatabaseEnvironmentT [PublicUserSummary]
 getAllUsers =
     runSql $ do
         users <- select $ from $ \u ->
                  return (u ^. UserId, u ^. UserDisplayName)
         return $ map fromPublic users
 
-getUserByKey :: UserId -> DatabaseEnvironmentT IO (Maybe PrivateUser)
+getUserByKey :: UserId -> DatabaseEnvironmentT (Maybe PrivateUser)
 getUserByKey key =
     runSql $ do
         maybeUser <- get key
         return $ fromPrivate key <$> maybeUser
 
-insertUser :: PrivateUserPre -> DatabaseEnvironmentT IO (Maybe UserId)
+insertUser :: PrivateUserPre -> DatabaseEnvironmentT (Maybe UserId)
 insertUser (PrivateUserPre uDisplayName uEmail) =
     runSql $ insertUnique User { userDisplayName = uDisplayName
                                , userEmail       = uEmail }

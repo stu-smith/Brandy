@@ -22,7 +22,7 @@ import Database.Persist                ( Key, Entity(..), insert )
 
 import Schema
 import Database                        ( runSql )
-import ApiUtility                      ( readKey )
+import ApiUtility                      ( readKeyOld )
 import Core                            ( DatabaseEnvironmentT, BrandyActionM )
 
 
@@ -33,7 +33,7 @@ apiGetResources = do
 
 apiGetResourceByKey :: T.Text -> BrandyActionM ()
 apiGetResourceByKey keyText =
-    case readKey keyText of
+    case readKeyOld keyText of
         Nothing  -> status badRequest400 >> text "Invalid ID."
         Just key -> text $ TL.fromStrict $ T.pack $ show key
 
@@ -45,7 +45,7 @@ apiInsertResource = do
 
 apiDeleteResourceByKey :: T.Text -> BrandyActionM ()
 apiDeleteResourceByKey keyText =
-    case readKey keyText of
+    case readKeyOld keyText of
         Nothing  -> status badRequest400 >> text "Invalid ID."
         Just key -> do
             numRows <- lift $ sqlDeleteResource key
@@ -54,7 +54,7 @@ apiDeleteResourceByKey keyText =
                 else status notFound404 >> text "Resource not found."
 
 
-sqlGetAllResourcesSummary :: DatabaseEnvironmentT IO [J.Value]
+sqlGetAllResourcesSummary :: DatabaseEnvironmentT [J.Value]
 sqlGetAllResourcesSummary =
     runSql $ do
         rows <- select $ from $ \resource ->
@@ -65,11 +65,11 @@ idAndPathAsJSON :: (Sql.Value (Key Resource), Sql.Value T.Text) -> J.Value
 idAndPathAsJSON (Sql.Value key, Sql.Value path) =
     object ["id" .= key, "path" .= path]
 
-sqlInsertResource :: Resource -> DatabaseEnvironmentT IO (Key Resource)
+sqlInsertResource :: Resource -> DatabaseEnvironmentT (Key Resource)
 sqlInsertResource res =
     runSql $ insert res
 
-sqlDeleteResource :: ResourceId -> DatabaseEnvironmentT IO Int64
+sqlDeleteResource :: ResourceId -> DatabaseEnvironmentT Int64
 sqlDeleteResource key =
     runSql $ deleteCount $ from $ \resource ->
              where_ (resource ^. ResourceId ==. val key)
