@@ -1,5 +1,6 @@
 
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Json.PrivateUserPre
 (
@@ -7,9 +8,13 @@ module Json.PrivateUserPre
 )
 where
 
-import Data.Aeson      ( ToJSON, FromJSON )
-import Data.Text as T  ( Text )
-import GHC.Generics    ( Generic )
+import Control.Monad.Trans.Either  ( right )
+import Data.Aeson                  ( ToJSON, FromJSON )
+import Data.Text as T              ( Text, null )
+import GHC.Generics                ( Generic )
+import Network.HTTP.Types.Status   ( badRequest400 )
+
+import ApiUtility                  ( Validate(..), apiFail )
 
 
 data PrivateUserPre = PrivateUserPre
@@ -20,3 +25,9 @@ data PrivateUserPre = PrivateUserPre
 
 instance ToJSON PrivateUserPre
 instance FromJSON PrivateUserPre
+
+instance Validate PrivateUserPre where
+    validate userPre
+        | T.null . displayName $ userPre = apiFail badRequest400 "Missing displayName."
+        | T.null . email       $ userPre = apiFail badRequest400 "Missing email."
+        | otherwise                      = right userPre

@@ -3,16 +3,24 @@
 
 module ApiUtility
 (
-  readKeyOld
+  Validate(..)
+, readKeyOld
 , readKey
 , showKey
 , apiFail
 , runApi
+, liftDB
+, liftWeb
+, validateDbGet
+, validateDbInsert
+, validateBody
 )
 where
 
+import Control.Applicative         ( (<$>) )
+import Control.Monad.Trans         ( lift )
 import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
-import Data.Aeson                  ( ToJSON )
+import Data.Aeson                  ( ToJSON, FromJSON, decode )
 import Data.Int                    ( Int64 )
 import qualified Data.Text as T
                                    ( Text )
@@ -20,11 +28,15 @@ import qualified Data.Text.Lazy as TL
                                    ( Text )
 import Database.Persist            ( Key, KeyBackend(Key), toPersistValue )
 import Data.Text.Read              ( decimal )
-import Network.HTTP.Types.Status   ( Status, badRequest400 )
+import Network.HTTP.Types.Status   ( Status, badRequest400, notFound404, conflict409 )
 import Web.PathPieces              ( toPathPiece )
-import Web.Scotty.Trans            ( json, text, status )
+import Web.Scotty.Trans            ( json, text, status, body )
 
-import Core                        ( ApiError(..), BrandyActionM )  
+import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
+
+
+class Validate a where
+    validate :: Monad m => a -> EitherT ApiError m a
 
 
 readKeyOld :: T.Text -> Maybe (Key a)
@@ -57,3 +69,24 @@ runApi f = do
     case e of
         Left (ApiError s m) -> status s >> text m
         Right v             -> json v
+
+liftDB :: DatabaseEnvironmentT a -> EitherT ApiError BrandyActionM a
+liftDB = lift . lift
+
+liftWeb :: BrandyActionM a -> EitherT ApiError BrandyActionM a
+liftWeb = lift
+
+validateDbGet :: Maybe a -> EitherT ApiError BrandyActionM a
+validateDbGet Nothing  = apiFail notFound404 "Not found."
+validateDbGet (Just u) = return u
+
+validateDbInsert :: Maybe a -> EitherT ApiError BrandyActionM a
+validateDbInsert Nothing     = apiFail conflict409 "Already in use."
+validateDbInsert (Just k)    = return k
+
+validateBody :: (FromJSON a, Validate a) => EitherT ApiError BrandyActionM a
+validateBody = do
+    maybeValue <- decode <$> liftWeb body
+    case maybeValue of
+        Nothing -> apiFail badRequest400 "Invalid request body."
+        Just v  -> validate v
