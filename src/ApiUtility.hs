@@ -14,6 +14,9 @@ module ApiUtility
 , validateDbGet
 , validateDbInsert
 , validateBody
+, apiDbGetSingle
+, apiDbGetMultiple
+, apiDbInsert
 )
 where
 
@@ -90,3 +93,20 @@ validateBody = do
     case maybeValue of
         Nothing -> apiFail badRequest400 "Invalid request body."
         Just v  -> validate v
+
+apiDbGetSingle :: T.Text -> (Key d -> DatabaseEnvironmentT (Maybe a)) -> EitherT ApiError BrandyActionM a
+apiDbGetSingle keyText dbGet = do
+    key        <- readKey keyText
+    maybeValue <- liftDB $ dbGet key
+    validateDbGet maybeValue
+
+apiDbGetMultiple :: DatabaseEnvironmentT [a] -> EitherT ApiError BrandyActionM [a]
+apiDbGetMultiple = liftDB
+
+apiDbInsert :: (FromJSON p, Validate p)
+            => (p -> DatabaseEnvironmentT (Maybe (Key d))) -> (p -> Key d -> a) -> EitherT ApiError BrandyActionM a
+apiDbInsert dbInsert convert = do
+    valuePre <- validateBody
+    maybeKey <- liftDB . dbInsert $ valuePre
+    key      <- validateDbInsert maybeKey
+    return $ convert valuePre key

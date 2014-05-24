@@ -7,16 +7,16 @@ module Api.UsersSpec
 )
 where
 
-import Control.Applicative        ( (<$>) )
-import Data.Aeson                 ( decode )
-import Data.Maybe                 ( fromJust )
-import Network.HTTP.Types.Status  ( ok200, badRequest400, notFound404, conflict409 )
-import Network.Wai.Test           ( simpleStatus, simpleBody )
-import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
+import Control.Applicative         ( (<$>) )
+import Network.HTTP.Types.Status   ( ok200, badRequest400, notFound404, conflict409 )
+import Network.Wai.Test            ( simpleStatus )
+import Test.Hspec                  ( Spec, describe, it, shouldBe, shouldSatisfy )
 
-import Json.PrivateUserPre        ( PrivateUserPre(..) )
-import Json.PublicUserSummary     ( PublicUserSummary )
-import TestUtility                ( runTest, get, post )
+import qualified Json.PrivateUser  ( PrivateUser(..) )
+import Json.PrivateUserPre         ( PrivateUserPre(..) )
+import Json.PublicUserSummary      ( PublicUserSummary )
+import Uri                         ( (./.) )
+import TestUtility                 ( runTest, get, post, put, jsonBody )
 
 
 spec :: Spec
@@ -31,9 +31,8 @@ spec = do
 
         it "should give empty list" $
             runTest $ \app -> do
-                body <- simpleBody <$> app `get` "/api/users"
-                let users = decode body :: Maybe [PublicUserSummary]
-                fromJust users `shouldSatisfy` null
+                users <- (jsonBody <$> app `get` "/api/users") :: IO [PublicUserSummary]
+                users `shouldSatisfy` null
 
     describe "get single user" $ do
 
@@ -51,36 +50,47 @@ spec = do
 
         it "should give 400 for missing displayName" $
             runTest $ \app -> do
-                let payload = PrivateUserPre "" "email@example.com"
-                status <- simpleStatus <$> (app `post` "/api/users") payload
+                let insertBody = PrivateUserPre "" "email@example.com"
+                status <- simpleStatus <$> (app `post` "/api/users") insertBody
                 status `shouldBe` badRequest400
 
         it "should give 400 for missing email" $
             runTest $ \app -> do
-                let payload = PrivateUserPre "Display Name" ""
-                status <- simpleStatus <$> (app `post` "/api/users") payload
+                let insertBody = PrivateUserPre "Display Name" ""
+                status <- simpleStatus <$> (app `post` "/api/users") insertBody
                 status `shouldBe` badRequest400
 
         it "should give 200 for add user" $
             runTest $ \app -> do
-                let payload = PrivateUserPre "Display Name" "email@example.com"
-                status <- simpleStatus <$> (app `post` "/api/users") payload
+                let insertBody = PrivateUserPre "Display Name" "email@example.com"
+                status <- simpleStatus <$> (app `post` "/api/users") insertBody
                 status `shouldBe` ok200
 
         it "should give 409 for duplicate email" $
             runTest $ \app -> do
-                let payload1 = PrivateUserPre "Display Name 1" "email@example.com"
-                status1 <- simpleStatus <$> (app `post` "/api/users") payload1
+                let insertBody1 = PrivateUserPre "Display Name 1" "email@example.com"
+                status1 <- simpleStatus <$> (app `post` "/api/users") insertBody1
                 status1 `shouldBe` ok200
-                let payload2 = PrivateUserPre "Display Name 2" "email@example.com"
-                status2 <- simpleStatus <$> (app `post` "/api/users") payload2
+                let insertBody2 = PrivateUserPre "Display Name 2" "email@example.com"
+                status2 <- simpleStatus <$> (app `post` "/api/users") insertBody2
                 status2 `shouldBe` conflict409
 
         it "should give 409 for duplicate displayName" $
             runTest $ \app -> do
-                let payload1 = PrivateUserPre "Display Name" "email1@example.com"
-                status1 <- simpleStatus <$> (app `post` "/api/users") payload1
+                let insertBody1 = PrivateUserPre "Display Name" "email1@example.com"
+                status1 <- simpleStatus <$> (app `post` "/api/users") insertBody1
                 status1 `shouldBe` ok200
-                let payload2 = PrivateUserPre "Display Name" "email2@example.com"
-                status2 <- simpleStatus <$> (app `post` "/api/users") payload2
+                let insertBody2 = PrivateUserPre "Display Name" "email2@example.com"
+                status2 <- simpleStatus <$> (app `post` "/api/users") insertBody2
                 status2 `shouldBe` conflict409
+
+    describe "update single user" $ do
+
+        it "should give 400 for missing displayName" $
+            runTest $ \app -> do
+                let insertBody = PrivateUserPre "Display Name" "email@example.com"
+                inserted <- jsonBody <$> (app `post` "/api/users") insertBody
+                let uid = Json.PrivateUser.id inserted
+                let updateBody = PrivateUserPre "" "email@example.com"
+                status <- simpleStatus <$> (app `put` ("/api/users" ./. uid)) updateBody
+                status `shouldBe` badRequest400
