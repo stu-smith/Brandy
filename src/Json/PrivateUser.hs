@@ -7,9 +7,10 @@ module Json.PrivateUser
 )
 where
 
-import Data.Aeson      ( ToJSON, FromJSON )
-import Data.Text as T  ( Text )
-import GHC.Generics    ( Generic )
+import Data.Aeson    ( ToJSON, FromJSON )
+import qualified Data.Text as T
+                     ( Text )
+import GHC.Generics  ( Generic )
 
 
 data PrivateUser = PrivateUser

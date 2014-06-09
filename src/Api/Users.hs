@@ -9,9 +9,11 @@ module Api.Users
 )
 where
 
-import qualified Data.Text as T  ( Text )
+import qualified Data.Text as T
+                         ( Text )
 
-import ApiUtility        ( showKey, runApi, apiDbGetSingle, apiDbGetMultiple, apiDbInsert )
+import ApiUtility        ( showKey, runApi
+                         , apiDbGetSingle, apiDbGetMultiple, apiDbInsert )
 import Core              ( BrandyActionM )
 import DataAccess.Users  ( getAllUsers, getUserByKey, insertUser )
 import qualified Json.PrivateUser as PU

@@ -15,7 +15,7 @@ import Test.Hspec                  ( Spec, describe, it, shouldBe, shouldSatisfy
 import qualified Json.PrivateUser  ( PrivateUser(..) )
 import Json.PrivateUserPre         ( PrivateUserPre(..) )
 import Json.PublicUserSummary      ( PublicUserSummary )
-import Uri                         ( (./.) )
+import Uri                         ( (+/+) )
 import TestUtility                 ( runTest, get, post, put, jsonBody )
 
 
@@ -91,6 +91,24 @@ spec = do
                 let insertBody = PrivateUserPre "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody
                 let uid = Json.PrivateUser.id inserted
-                let updateBody = PrivateUserPre "" "email@example.com"
-                status <- simpleStatus <$> (app `put` ("/api/users" ./. uid)) updateBody
+                let updateBody = PrivateUserPre "" "newemail@example.com"
+                status <- simpleStatus <$> (app `put` ("/api/users" +/+ uid)) updateBody
                 status `shouldBe` badRequest400
+
+        it "should give 400 for missing email" $
+            runTest $ \app -> do
+                let insertBody = PrivateUserPre "Display Name" "email@example.com"
+                inserted <- jsonBody <$> (app `post` "/api/users") insertBody
+                let uid = Json.PrivateUser.id inserted
+                let updateBody = PrivateUserPre "New Display Name" ""
+                status <- simpleStatus <$> (app `put` ("/api/users" +/+ uid)) updateBody
+                status `shouldBe` badRequest400
+
+        it "should give 200 for update user" $
+            runTest $ \app -> do
+                let insertBody = PrivateUserPre "Display Name" "email@example.com"
+                inserted <- jsonBody <$> (app `post` "/api/users") insertBody
+                let uid = Json.PrivateUser.id inserted
+                let updateBody = PrivateUserPre "New Display Name" "newemail@example.com"
+                status <- simpleStatus <$> (app `put` ("/api/users" +/+ uid)) updateBody
+                status `shouldBe` ok200
