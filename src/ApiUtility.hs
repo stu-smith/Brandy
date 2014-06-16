@@ -36,7 +36,7 @@ import Web.PathPieces              ( toPathPiece )
 import Web.Scotty.Trans            ( json, text, status, body )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
-
+import Json.WithId                 ( WithId(..) )
 
 class Validate a where
     validate :: Monad m => a -> EitherT ApiError m a
@@ -103,10 +103,9 @@ apiDbGetSingle keyText dbGet = do
 apiDbGetMultiple :: DatabaseEnvironmentT [a] -> EitherT ApiError BrandyActionM [a]
 apiDbGetMultiple = liftDB
 
-apiDbInsert :: (FromJSON p, Validate p)
-            => (p -> DatabaseEnvironmentT (Maybe (Key d))) -> (p -> Key d -> a) -> EitherT ApiError BrandyActionM a
-apiDbInsert dbInsert convert = do
-    valuePre <- validateBody
-    maybeKey <- liftDB . dbInsert $ valuePre
-    key      <- validateDbInsert maybeKey
-    return $ convert valuePre key
+apiDbInsert :: (FromJSON a, Validate a)
+            => (a -> DatabaseEnvironmentT (Maybe (WithId a))) -> EitherT ApiError BrandyActionM (WithId a)
+apiDbInsert dbInsert = do
+    pre       <- validateBody
+    maybePost <- liftDB . dbInsert $ pre
+    validateDbInsert maybePost

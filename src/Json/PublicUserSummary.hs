@@ -13,8 +13,7 @@ import GHC.Generics            ( Generic )
 
 
 data PublicUserSummary = PublicUserSummary
-    { id          :: T.Text
-    , displayName :: T.Text
+    { displayName :: T.Text
     }
   deriving (Show, Generic)
 

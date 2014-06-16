@@ -16,7 +16,7 @@ executable Brandy
   other-modules:         ApiUtility, Database, Routing, Schema
                        , Api.Users, Api.Resources
                        , DataAccess.Users
-                       , Json.PrivateUser, Json.PrivateUserPre, Json.PublicUserSummary, Json.WithId
+                       , Json.PrivateUser, Json.PublicUserSummary, Json.WithId
   build-depends:         base
                        , text
                        , time

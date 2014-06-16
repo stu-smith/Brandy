@@ -17,6 +17,7 @@ import qualified Data.Text as T
 
 import Json.WithId   ( WithId(..) )
 
+
 spec :: Spec
 spec =
 

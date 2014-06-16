@@ -9,48 +9,53 @@ module DataAccess.Users
 )
 where
 
-import Control.Applicative                          ( (<$>) )
-import Data.Text as T                               ( Text, pack )
 import Database.Esqueleto                           ( Value(..), select, from, (^.) )
-import Database.Persist                             ( get, insertUnique )
+import Database.Persist                             ( Entity(..), get, insertUnique )
+import qualified Data.Text as T                     ( Text )
 
 import Core                                         ( DatabaseEnvironmentT )
 import Database                                     ( runSql )
 import Json.PublicUserSummary as PublicUserSummary  ( PublicUserSummary(..) )
 import Json.PrivateUser as PrivateUser              ( PrivateUser(..) )
-import Json.PrivateUserPre as PrivateUserPre        ( PrivateUserPre(..) )
+import Json.WithId                                  ( WithId(..), withId )
 import Schema
 
 
-getAllUsers :: DatabaseEnvironmentT [PublicUserSummary]
+getAllUsers :: DatabaseEnvironmentT [WithId PublicUserSummary]
 getAllUsers =
     runSql $ do
         users <- select $ from $ \u ->
                  return (u ^. UserId, u ^. UserDisplayName)
         return $ map fromPublic users
 
-getUserByKey :: UserId -> DatabaseEnvironmentT (Maybe PrivateUser)
+getUserByKey :: UserId -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
 getUserByKey key =
     runSql $ do
         maybeUser <- get key
-        return $ fromPrivate key <$> maybeUser
+        return $ do
+            user <- maybeUser
+            return . fromPrivate $ Entity key user
 
-insertUser :: PrivateUserPre -> DatabaseEnvironmentT (Maybe UserId)
-insertUser (PrivateUserPre uDisplayName uEmail) =
-    runSql $ insertUnique User { userDisplayName = uDisplayName
-                               , userEmail       = uEmail }
+insertUser :: PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+insertUser (PrivateUser uDisplayName uEmail) = do
+    let user = User { userDisplayName = uDisplayName
+                    , userEmail       = uEmail }
+    maybeId <- runSql $ insertUnique user
+    return $ do
+        uId <- maybeId
+        return . fromPrivate $ Entity uId user
 
-fromPublic :: (Value UserId, Value T.Text) -> PublicUserSummary
+fromPrivate :: Entity User -> WithId PrivateUser
+fromPrivate (Entity uId (User uDisplayName uEmail)) =
+    withId uId
+        PrivateUser
+            { PrivateUser.displayName = uDisplayName
+            , PrivateUser.email = uEmail
+            }
+
+fromPublic :: (Value UserId, Value T.Text) -> WithId PublicUserSummary
 fromPublic (Value uId, Value uDisplayName) =
-    PublicUserSummary
-        { PublicUserSummary.id          = pack $ show uId
-        , PublicUserSummary.displayName = uDisplayName
-        }
-
-fromPrivate :: UserId -> User -> PrivateUser
-fromPrivate uId (User uDisplayName uEmail) =
-    PrivateUser
-        { PrivateUser.id          = pack $ show uId
-        , PrivateUser.displayName = uDisplayName
-        , PrivateUser.email       = uEmail
-        }
+    withId uId
+        PublicUserSummary
+            { PublicUserSummary.displayName = uDisplayName
+            }
