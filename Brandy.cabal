@@ -42,6 +42,7 @@ executable Brandy
                        , path-pieces
                        , either
                        , unordered-containers
+                       , MonadCatchIO-transformers
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
 
@@ -80,3 +81,4 @@ Test-Suite spec
                        , path-pieces
                        , either
                        , unordered-containers
+                       , MonadCatchIO-transformers
