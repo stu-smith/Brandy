@@ -37,8 +37,9 @@ runSqlMaybe :: forall a . forall m . forall t .
 runSqlMaybe action = do
     conn <- ask
     lift $ runWithTry conn
-  where runWithTry conn = do
-            result <- (try $ runSqlite conn action) :: m (Either IOException a)
-            return $ case result of
-                Left _  -> Nothing
-                Right v -> Just v
+  where
+    runWithTry conn = do
+        result <- (try $ runSqlite conn action) :: m (Either IOException a)
+        return $ case result of
+            Left _  -> Nothing
+            Right v -> Just v

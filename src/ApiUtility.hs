@@ -5,18 +5,14 @@ module ApiUtility
 (
   Validate(..)
 , readKeyOld
-, readKey
-, showKey
 , apiFail
 , runApi
 , liftDB
 , liftWeb
-, validateDbGet
-, validateDbInsert
-, validateBody
 , apiDbGetSingle
 , apiDbGetMultiple
 , apiDbInsert
+, apiDbUpdate
 )
 where
 
@@ -32,7 +28,6 @@ import qualified Data.Text.Lazy as TL
 import Database.Persist            ( Key, KeyBackend(Key), toPersistValue )
 import Data.Text.Read              ( decimal )
 import Network.HTTP.Types.Status   ( Status, badRequest400, notFound404, conflict409 )
-import Web.PathPieces              ( toPathPiece )
 import Web.Scotty.Trans            ( json, text, status, body )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
@@ -41,26 +36,6 @@ import Json.WithId                 ( WithId(..) )
 class Validate a where
     validate :: Monad m => a -> EitherT ApiError m a
 
-
-readKeyOld :: T.Text -> Maybe (Key a)
-readKeyOld s =
-    case decimal s of
-        Right (v, "") -> Just $ mkKey v
-        _             -> Nothing
-
-readKey :: Monad m => T.Text -> EitherT ApiError m (Key a)
-readKey s =
-    case decimal s of
-        Right (v, "") -> right $ mkKey v
-        _             -> left $ ApiError badRequest400 "Invalid key."
-
-showKey :: Key a -> T.Text
-showKey (Key v) =
-    toPathPiece v
-
-mkKey :: Int64 -> Key a
-mkKey =
-    Key . toPersistValue
 
 apiFail :: Monad m => Status -> TL.Text -> EitherT ApiError m a
 apiFail s m
@@ -79,13 +54,6 @@ liftDB = lift . lift
 liftWeb :: BrandyActionM a -> EitherT ApiError BrandyActionM a
 liftWeb = lift
 
-validateDbGet :: Maybe a -> EitherT ApiError BrandyActionM a
-validateDbGet Nothing  = apiFail notFound404 "Not found."
-validateDbGet (Just u) = return u
-
-validateDbInsert :: Maybe a -> EitherT ApiError BrandyActionM a
-validateDbInsert Nothing     = apiFail conflict409 "Already in use."
-validateDbInsert (Just k)    = return k
 
 validateBody :: (FromJSON a, Validate a) => EitherT ApiError BrandyActionM a
 validateBody = do
@@ -98,7 +66,7 @@ apiDbGetSingle :: T.Text -> (Key d -> DatabaseEnvironmentT (Maybe a)) -> EitherT
 apiDbGetSingle keyText dbGet = do
     key        <- readKey keyText
     maybeValue <- liftDB $ dbGet key
-    validateDbGet maybeValue
+    validateDbExists maybeValue
 
 apiDbGetMultiple :: DatabaseEnvironmentT [a] -> EitherT ApiError BrandyActionM [a]
 apiDbGetMultiple = liftDB
@@ -109,3 +77,36 @@ apiDbInsert dbInsert = do
     pre       <- validateBody
     maybePost <- liftDB . dbInsert $ pre
     validateDbInsert maybePost
+
+apiDbUpdate :: (FromJSON a, Validate a)
+            => T.Text -> (Key d -> a -> DatabaseEnvironmentT (Maybe (WithId a))) -> EitherT ApiError BrandyActionM (WithId a)
+apiDbUpdate keyText dbUpdate = do
+    key       <- readKey keyText
+    pre       <- validateBody
+    maybePost <- liftDB $ dbUpdate key pre
+    validateDbExists maybePost
+
+
+readKeyOld :: T.Text -> Maybe (Key a)
+readKeyOld s =
+    case decimal s of
+        Right (v, "") -> Just $ mkKey v
+        _             -> Nothing
+
+readKey :: Monad m => T.Text -> EitherT ApiError m (Key a)
+readKey s =
+    case decimal s of
+        Right (v, "") -> right $ mkKey v
+        _             -> left $ ApiError notFound404 "Not found."
+
+mkKey :: Int64 -> Key a
+mkKey =
+    Key . toPersistValue
+
+validateDbExists :: Maybe a -> EitherT ApiError BrandyActionM a
+validateDbExists Nothing  = apiFail notFound404 "Not found."
+validateDbExists (Just u) = return u
+
+validateDbInsert :: Maybe a -> EitherT ApiError BrandyActionM a
+validateDbInsert Nothing  = apiFail conflict409 "Already in use."
+validateDbInsert (Just k) = return k

@@ -36,10 +36,10 @@ spec = do
 
     describe "get single user" $ do
 
-        it "should give 400 for bad key" $
+        it "should give 404 for bad key" $
             runTest $ \app -> do
                 status <- simpleStatus <$> app `get` "/api/users/bad-key"
-                status `shouldBe` badRequest400
+                status `shouldBe` notFound404
 
         it "should give 404 for missing key" $
             runTest $ \app -> do

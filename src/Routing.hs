@@ -7,10 +7,10 @@ module Routing
 )
 where
 
-import Web.Scotty.Trans  ( get, post, delete, html, param )
+import Web.Scotty.Trans  ( get, put, post, delete, html, param )
 
 import Core              ( BrandyScottyM )
-import Api.Users         ( apiGetUsers, apiGetUserByKey, apiAddUser )
+import Api.Users         ( apiGetUsers, apiGetUserByKey, apiAddUser, apiUpdateUser )
 import Api.Resources     ( apiGetResources, apiGetResourceByKey
                          , apiInsertResource, apiDeleteResourceByKey )
 
@@ -20,8 +20,9 @@ routes = do
     get    root               $ html "ROOT"
 
     get    userCollection       apiGetUsers
-    post   userCollection       apiAddUser
     get    userElement        $ apiGetUserByKey        =<< key
+    put    userElement        $ apiUpdateUser          =<< key
+    post   userCollection       apiAddUser
 
     get    resourceCollection   apiGetResources
     get    resourceElement    $ apiGetResourceByKey    =<< key

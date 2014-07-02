@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Uri
-( (+/+)
+(
+  (+/+)
 )
 where
 

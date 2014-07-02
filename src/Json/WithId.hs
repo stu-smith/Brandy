@@ -4,8 +4,7 @@
 module Json.WithId
 (
   WithId(..)
-, withId
-, mkId
+, addId
 )
 where
 
@@ -14,7 +13,9 @@ import Data.Aeson           ( ToJSON(..), FromJSON(..), Value(..), (.:) )
 import Data.Aeson.Types     ( Parser )
 import Data.HashMap.Strict  ( insert )
 import qualified Data.Text as T
-                            ( Text, pack )
+                            ( Text )
+import Database.Persist     ( Key, unKey )
+import Web.PathPieces       ( toPathPiece )
 
 
 data WithId a = WithId
@@ -23,9 +24,9 @@ data WithId a = WithId
     }
   deriving (Show, Eq)
 
-withId :: Show k => k -> v -> WithId v
-withId k =
-    WithId (mkId k)
+addId :: Key d -> v -> WithId v
+addId =
+    WithId . toPathPiece . unKey
 
 instance (ToJSON a) => ToJSON (WithId a) where
     toJSON (WithId idv av) =
@@ -41,7 +42,3 @@ instance (FromJSON a) => FromJSON (WithId a) where
             idv <- v .: "id"
             return $ WithId idv av
         _ -> mzero
-
-mkId :: Show a => a -> T.Text
-mkId =
-    T.pack . show
