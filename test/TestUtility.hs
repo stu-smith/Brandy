@@ -8,6 +8,7 @@ module TestUtility
 , get
 , post
 , put
+, delete
 , jsonBody
 )
 where
@@ -28,7 +29,7 @@ import Network.Wai                 ( Application, Request(..) )
 import Network.Wai.Test            ( SRequest(..), SResponse
                                    , runSession, srequest, setRawPathInfo, defaultRequest, simpleBody )
 import Network.HTTP.Types.Header   ( hAccept )
-import Network.HTTP.Types.Method   ( Method, methodPost, methodPut )
+import Network.HTTP.Types.Method   ( Method, methodGet, methodPost, methodPut, methodDelete )
 import System.IO.Temp              ( withSystemTempFile )
 import Web.Scotty.Trans            ( scottyAppT )
 
@@ -51,14 +52,19 @@ scottyApp file = scottyAppT (`runReaderT` file) (`runReaderT` file)
 
 get :: Application -> T.Text -> IO SResponse
 get app path =
-    runSession (srequest (SRequest req "")) app
-  where req = setRawPathInfo jsonRequest $ encodeUri path
+    actionWithoutBody (jsonRequest methodGet) app path
 
 post :: (ToJSON a) => Application -> T.Text -> a -> IO SResponse
-post = actionWithBody $ jsonRequestWithBody methodPost
+post =
+    actionWithBody $ jsonRequestWithBody methodPost
 
 put :: (ToJSON a) => Application -> T.Text -> a -> IO SResponse
-put = actionWithBody $ jsonRequestWithBody methodPut
+put =
+    actionWithBody $ jsonRequestWithBody methodPut
+
+delete :: Application -> T.Text ->IO SResponse
+delete app path =
+    actionWithoutBody (jsonRequest methodDelete) app path
 
 jsonBody :: FromJSON a => SResponse -> a
 jsonBody =
@@ -71,17 +77,23 @@ actionWithBody request app path payload =
         sreq = SRequest req body
         body = encode payload
 
-jsonRequest :: Request
-jsonRequest =
+actionWithoutBody :: Request -> Application -> T.Text -> IO SResponse
+actionWithoutBody request app path =
+    runSession (srequest sreq) app
+  where req  = setRawPathInfo request $ encodeUri path
+        sreq = SRequest req ""
+
+jsonRequest :: Method -> Request
+jsonRequest method =
     defaultRequest
-        { requestHeaders = [(hAccept, "application/json")]
+        { requestMethod = method
+        , requestHeaders = [(hAccept, "application/json")]
         }
 
 jsonRequestWithBody :: Method -> BS.ByteString -> Request
 jsonRequestWithBody method payload =
-    jsonRequest
-        { requestMethod = method
-        , requestBody   = yield payload
+    (jsonRequest method)
+        { requestBody   = yield payload
         }
 
 encodeUri :: T.Text -> BS.ByteString

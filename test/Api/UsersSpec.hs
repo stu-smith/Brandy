@@ -16,7 +16,7 @@ import Json.PrivateUser           ( PrivateUser(..) )
 import Json.PublicUserSummary     ( PublicUserSummary )
 import Json.WithId                ( WithId(..) )
 import Uri                        ( (+/+) )
-import TestUtility                ( runTest, get, post, put, jsonBody )
+import TestUtility                ( runTest, get, post, put, delete, jsonBody )
 
 
 spec :: Spec
@@ -45,6 +45,14 @@ spec = do
             runTest $ \app -> do
                 status <- simpleStatus <$> app `get` "/api/users/123"
                 status `shouldBe` notFound404
+
+        it "should give 200 for get user" $
+            runTest $ \app -> do
+                let insertBody = PrivateUser "Display Name" "email@example.com"
+                inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
+                let uid = Json.WithId.id inserted
+                status <- simpleStatus <$> app `get` ("/api/users" +/+ uid)
+                status `shouldBe` ok200
 
     describe "add single user" $ do
 
@@ -112,3 +120,35 @@ spec = do
                 let updateBody = PrivateUser "New Display Name" "newemail@example.com"
                 status <- simpleStatus <$> (app `put` ("/api/users" +/+ uid)) updateBody
                 status `shouldBe` ok200
+
+    describe "delete single user" $ do
+
+        it "should give 200 for bad key" $
+            runTest $ \app -> do
+                status <- simpleStatus <$> app `delete` "/api/users/bad-key"
+                status `shouldBe` ok200
+
+        it "should give 200 for missing key" $
+            runTest $ \app -> do
+                status <- simpleStatus <$> app `delete` "/api/users/123"
+                status `shouldBe` ok200
+
+        it "should give 200 for successful delete user" $
+            runTest $ \app -> do
+                let insertBody = PrivateUser "Display Name" "email@example.com"
+                inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
+                let uid = Json.WithId.id inserted
+                status <- simpleStatus <$> app `delete` ("/api/users" +/+ uid)
+                status `shouldBe` ok200
+
+        it "should actually delete the item" $
+            runTest $ \app -> do
+                let insertBody = PrivateUser "Display Name" "email@example.com"
+                inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
+                let uid = Json.WithId.id inserted
+                get1status <- simpleStatus <$> app `get` ("/api/users" +/+ uid)
+                get1status `shouldBe` ok200
+                status <- simpleStatus <$> app `delete` ("/api/users" +/+ uid)
+                status `shouldBe` ok200
+                get2status <- simpleStatus <$> app `get` ("/api/users" +/+ uid)
+                get2status `shouldBe` notFound404
