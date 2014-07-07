@@ -13,6 +13,7 @@ module ApiUtility
 , apiDbGetMultiple
 , apiDbInsert
 , apiDbUpdate
+, apiDbDelete
 )
 where
 
@@ -86,6 +87,9 @@ apiDbUpdate keyText dbUpdate = do
     maybePost <- liftDB $ dbUpdate key pre
     validateDbExists maybePost
 
+apiDbDelete :: T.Text -> (Key d -> DatabaseEnvironmentT ()) -> EitherT ApiError BrandyActionM ()
+apiDbDelete keyText dbDelete =
+    readKey_ keyText (liftDB . dbDelete)
 
 readKeyOld :: T.Text -> Maybe (Key a)
 readKeyOld s =
@@ -98,6 +102,12 @@ readKey s =
     case decimal s of
         Right (v, "") -> right $ mkKey v
         _             -> left $ ApiError notFound404 "Not found."
+
+readKey_ :: Monad m => T.Text -> (Key a -> EitherT ApiError m ()) -> EitherT ApiError m ()
+readKey_ s a =
+    case decimal s of
+        Right (v, "") -> a (mkKey v) >> right ()
+        _             ->                right ()
 
 mkKey :: Int64 -> Key a
 mkKey =

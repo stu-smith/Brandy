@@ -7,12 +7,13 @@ module DataAccess.Users
 , getUserByKey
 , insertUser
 , updateUser
+, deleteUser
 )
 where
 
 import Control.Applicative                          ( (<$>) )
 import Database.Esqueleto                           ( Value(..), select, from, (^.) )
-import Database.Persist                             ( Entity(..), get, insert, replace )
+import Database.Persist                             ( Entity(..), get, insert, replace, delete )
 import qualified Data.Text as T                     ( Text )
 
 import Core                                         ( DatabaseEnvironmentT )
@@ -48,6 +49,10 @@ updateUser key privateUser =
     runSql $ do
         replace key $ apiToDbPrivate privateUser
         return $ Just $ addId key privateUser
+
+deleteUser :: UserId -> DatabaseEnvironmentT ()
+deleteUser key =
+    runSql $ delete key
 
 dbToApiPrivate :: Entity User -> WithId PrivateUser
 dbToApiPrivate (Entity uId (User uDisplayName uEmail)) =

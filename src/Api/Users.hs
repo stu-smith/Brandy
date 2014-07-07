@@ -7,6 +7,7 @@ module Api.Users
 , apiGetUserByKey
 , apiAddUser
 , apiUpdateUser
+, apiDeleteUser
 )
 where
 
@@ -14,9 +15,9 @@ import qualified Data.Text as T
                          ( Text )
 
 import ApiUtility        ( runApi
-                         , apiDbGetSingle, apiDbGetMultiple, apiDbInsert, apiDbUpdate )
+                         , apiDbGetSingle, apiDbGetMultiple, apiDbInsert, apiDbUpdate, apiDbDelete )
 import Core              ( BrandyActionM )
-import DataAccess.Users  ( getAllUsers, getUserByKey, insertUser, updateUser )
+import DataAccess.Users  ( getAllUsers, getUserByKey, insertUser, updateUser, deleteUser )
 
 
 apiGetUsers :: BrandyActionM ()
@@ -34,3 +35,7 @@ apiAddUser = runApi $
 apiUpdateUser :: T.Text -> BrandyActionM ()
 apiUpdateUser keyText = runApi $
     apiDbUpdate keyText updateUser
+
+apiDeleteUser :: T.Text -> BrandyActionM ()
+apiDeleteUser keyText = runApi $
+    apiDbDelete keyText deleteUser
