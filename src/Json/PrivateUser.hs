@@ -1,10 +1,13 @@
 
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Json.PrivateUser
 (
   PrivateUser(..)
+, privateUserMapping
 )
 where
 
@@ -15,6 +18,8 @@ import GHC.Generics                ( Generic )
 import Network.HTTP.Types.Status   ( badRequest400 )
 
 import ApiUtility                  ( Validate(..), apiFail )
+import Database                    ( JsonDataAccessMapping(..) )
+import Schema
 
 
 data PrivateUser = PrivateUser
@@ -31,3 +36,16 @@ instance Validate PrivateUser where
         | T.null . displayName $ userPre = apiFail badRequest400 "Missing displayName."
         | T.null . email       $ userPre = apiFail badRequest400 "Missing email."
         | otherwise                      = right userPre
+
+privateUserMapping :: JsonDataAccessMapping PrivateUser User
+privateUserMapping = JsonDataAccessMapping
+    {
+        jsonToDataAccess = \(PrivateUser uDisplayName uEmail) -> User
+            { userDisplayName = uDisplayName
+            , userEmail       = uEmail
+            },
+        dataAccessToJson = \(User uDisplayName uEmail) -> PrivateUser
+            { displayName = uDisplayName
+            , email = uEmail
+            }
+    }

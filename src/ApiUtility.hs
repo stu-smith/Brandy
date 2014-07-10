@@ -80,7 +80,8 @@ apiDbInsert dbInsert = do
     validateDbInsert maybePost
 
 apiDbUpdate :: (FromJSON a, Validate a)
-            => T.Text -> (Key d -> a -> DatabaseEnvironmentT (Maybe (WithId a))) -> EitherT ApiError BrandyActionM (WithId a)
+            => T.Text -> (Key d -> a -> DatabaseEnvironmentT (Maybe (WithId a)))
+            -> EitherT ApiError BrandyActionM (WithId a)
 apiDbUpdate keyText dbUpdate = do
     key       <- readKey keyText
     pre       <- validateBody

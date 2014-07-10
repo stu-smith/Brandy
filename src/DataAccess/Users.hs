@@ -1,5 +1,6 @@
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module DataAccess.Users
 (
@@ -11,15 +12,15 @@ module DataAccess.Users
 )
 where
 
-import Control.Applicative                          ( (<$>) )
 import Database.Esqueleto                           ( Value(..), select, from, (^.) )
-import Database.Persist                             ( Entity(..), get, insert, replace, delete )
+import Database.Persist                             ( Key )
 import qualified Data.Text as T                     ( Text )
 
 import Core                                         ( DatabaseEnvironmentT )
-import Database                                     ( runSql, runSqlMaybe )
+import Database                                     ( runSql
+                                                    , standardGetByKey, standardInsert, standardUpdate, standardDelete )
 import Json.PublicUserSummary as PublicUserSummary  ( PublicUserSummary(..) )
-import Json.PrivateUser as PrivateUser              ( PrivateUser(..) )
+import Json.PrivateUser as PrivateUser              ( PrivateUser(..), privateUserMapping )
 import Json.WithId                                  ( WithId(..), addId )
 import Schema
 
@@ -31,43 +32,17 @@ getAllUsers =
                  return (u ^. UserId, u ^. UserDisplayName)
         return $ map dbToApiPublic users
 
-getUserByKey :: UserId -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-getUserByKey key = do
-    maybeUser <- runSql $ get key
-    return $ toApi <$> maybeUser
-  where toApi user = dbToApiPrivate $ Entity key user
+getUserByKey :: Key User -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+getUserByKey = standardGetByKey privateUserMapping
 
 insertUser :: PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-insertUser user = do
-    maybeUserId <- runSqlMaybe $ insert dbUser
-    return $ toApi <$> maybeUserId
-  where dbUser       = apiToDbPrivate user
-        toApi userId = dbToApiPrivate $ Entity userId dbUser
+insertUser = standardInsert privateUserMapping
 
-updateUser :: UserId -> PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-updateUser key privateUser =
-    runSql $ do
-        replace key $ apiToDbPrivate privateUser
-        return $ Just $ addId key privateUser
+updateUser :: Key User -> PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+updateUser  = standardUpdate privateUserMapping
 
-deleteUser :: UserId -> DatabaseEnvironmentT ()
-deleteUser key =
-    runSql $ delete key
-
-dbToApiPrivate :: Entity User -> WithId PrivateUser
-dbToApiPrivate (Entity uId (User uDisplayName uEmail)) =
-    addId uId
-        PrivateUser
-            { PrivateUser.displayName = uDisplayName
-            , PrivateUser.email = uEmail
-            }
-
-apiToDbPrivate :: PrivateUser -> User
-apiToDbPrivate (PrivateUser uDisplayName uEmail) =
-    User
-        { userDisplayName = uDisplayName
-        , userEmail       = uEmail
-        }
+deleteUser :: Key User -> DatabaseEnvironmentT ()
+deleteUser = standardDelete
 
 dbToApiPublic :: (Value UserId, Value T.Text) -> WithId PublicUserSummary
 dbToApiPublic (Value uId, Value uDisplayName) =
