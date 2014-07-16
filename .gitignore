@@ -220,3 +220,5 @@ pip-log.txt
 
 cabal-dev/
 brandy.sqlite3
+.cabal-sandbox
+cabal.sandbox.config

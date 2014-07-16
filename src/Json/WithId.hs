@@ -4,6 +4,7 @@
 module Json.WithId
 (
   WithId(..)
+, getId
 , addId
 )
 where
@@ -19,10 +20,13 @@ import Web.PathPieces       ( toPathPiece )
 
 
 data WithId a = WithId
-    { id    :: T.Text
+    { id     :: T.Text
     , value :: a
     }
   deriving (Show, Eq)
+
+getId :: WithId a -> T.Text
+getId (WithId i _) = i
 
 addId :: Key d -> v -> WithId v
 addId =

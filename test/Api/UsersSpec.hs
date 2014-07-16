@@ -14,7 +14,7 @@ import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy 
 
 import Json.PrivateUser           ( PrivateUser(..) )
 import Json.PublicUserSummary     ( PublicUserSummary )
-import Json.WithId                ( WithId(..) )
+import Json.WithId                ( WithId(..), getId )
 import Uri                        ( (+/+) )
 import TestUtility                ( runTest, get, post, put, delete, jsonBody )
 
@@ -50,7 +50,7 @@ spec = do
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
-                let uid = Json.WithId.id inserted
+                let uid = getId inserted
                 status <- simpleStatus <$> app `get` ("/api/users" +/+ uid)
                 status `shouldBe` ok200
 
@@ -98,7 +98,7 @@ spec = do
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
-                let uid = Json.WithId.id inserted
+                let uid = getId inserted
                 let updateBody = PrivateUser "" "newemail@example.com"
                 status <- simpleStatus <$> (app `put` ("/api/users" +/+ uid)) updateBody
                 status `shouldBe` badRequest400
@@ -107,7 +107,7 @@ spec = do
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
-                let uid = Json.WithId.id inserted
+                let uid = getId inserted
                 let updateBody = PrivateUser "New Display Name" ""
                 status <- simpleStatus <$> (app `put` ("/api/users" +/+ uid)) updateBody
                 status `shouldBe` badRequest400
@@ -116,7 +116,7 @@ spec = do
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
-                let uid = Json.WithId.id inserted
+                let uid = getId inserted
                 let updateBody = PrivateUser "New Display Name" "newemail@example.com"
                 status <- simpleStatus <$> (app `put` ("/api/users" +/+ uid)) updateBody
                 status `shouldBe` ok200
@@ -137,7 +137,7 @@ spec = do
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
-                let uid = Json.WithId.id inserted
+                let uid = getId inserted
                 status <- simpleStatus <$> app `delete` ("/api/users" +/+ uid)
                 status `shouldBe` ok200
 
@@ -145,7 +145,7 @@ spec = do
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
-                let uid = Json.WithId.id inserted
+                let uid = getId inserted
                 get1status <- simpleStatus <$> app `get` ("/api/users" +/+ uid)
                 get1status `shouldBe` ok200
                 status <- simpleStatus <$> app `delete` ("/api/users" +/+ uid)

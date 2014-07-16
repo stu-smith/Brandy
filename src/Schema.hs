@@ -25,6 +25,11 @@ share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
         UniqueUserDisplayName  displayName
       deriving Show Read Eq Ord
 
+    Tag
+        name         Text
+        UniqueTagName           name
+      deriving Show Read Eq Ord
+
     Resource json
         path         Text
         createdBy    UserId
@@ -32,7 +37,7 @@ share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
         public       Bool
         contentType  Text
         content      Text
-        UniqueResourcePath  path
+        UniqueResourcePath      path
       deriving Show Read Eq Ord
 
 |]

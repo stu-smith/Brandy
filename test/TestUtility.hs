@@ -20,7 +20,6 @@ import qualified Data.ByteString as BS
                                    ( ByteString )
 import qualified Data.ByteString.Lazy as BSL
                                    ( toStrict )
-import Data.Conduit                ( yield )
 import qualified Data.Text as T    ( Text, pack )
 import Data.Maybe                  ( fromJust )
 import Data.Text.Encoding          ( encodeUtf8 )
@@ -86,14 +85,14 @@ actionWithoutBody request app path =
 jsonRequest :: Method -> Request
 jsonRequest method =
     defaultRequest
-        { requestMethod = method
+        { requestMethod  = method
         , requestHeaders = [(hAccept, "application/json")]
         }
 
 jsonRequestWithBody :: Method -> BS.ByteString -> Request
 jsonRequestWithBody method payload =
     (jsonRequest method)
-        { requestBody   = yield payload
+        { requestBody = return payload
         }
 
 encodeUri :: T.Text -> BS.ByteString

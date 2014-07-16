@@ -8,13 +8,14 @@ author:              Stu Smith
 maintainer:          stusmith1977@gmail.com
 category:            Web
 build-type:          Simple
-cabal-version:       >=1.10
+cabal-version:       >=1.20
 
 executable Brandy
   Default-Language:    Haskell2010
   main-is:             Main.hs
   other-modules:         ApiUtility, Database, Routing, Schema
                        , Api.Users, Api.Resources
+                       , Database
                        , DataAccess.Users
                        , Json.PrivateUser, Json.PublicUserSummary, Json.WithId
   build-depends:         base
@@ -30,12 +31,12 @@ executable Brandy
                        , monad-control
                        , monad-logger
                        , esqueleto
-                       , conduit-extra
-                       , scotty ==0.6.2
+                       , scotty
                        , aeson
                        , http-types
                        , wai
                        , wai-test
+                       , wai-extra
                        , warp
                        , temporary
                        , conduit
@@ -69,12 +70,12 @@ Test-Suite spec
                        , monad-control
                        , monad-logger
                        , esqueleto
-                       , conduit-extra
-                       , scotty ==0.6.2
+                       , scotty
                        , aeson
                        , http-types
                        , wai
                        , wai-test
+                       , wai-extra
                        , warp
                        , temporary
                        , conduit

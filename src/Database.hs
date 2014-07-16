@@ -2,10 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE TypeFamilies #-}
 
 module Database
 (
@@ -70,13 +67,12 @@ standardGetByKey (JsonDataAccessMapping _ dToJ) key = do
     return $ toApi <$> maybeDb
   where toApi db = addId key $ dToJ db
 
-standardInsert :: forall d . forall j .
-                  (PersistEntityBackend d ~ SqlBackend, PersistEntity d)
+standardInsert :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d)
                => JsonDataAccessMapping j d -> j -> DatabaseEnvironmentT (Maybe (WithId j))
 standardInsert (JsonDataAccessMapping jToD dToJ) json = do
     maybeId <- runSqlMaybe $ insert db
     return $ toApi <$> maybeId
-  where db        = jToD json :: d
+  where db        = jToD json
         toApi key = addId key $ dToJ db
 
 standardUpdate :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d)
