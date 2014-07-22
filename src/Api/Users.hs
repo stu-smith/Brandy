@@ -14,7 +14,7 @@ where
 import qualified Data.Text as T
                          ( Text )
 
-import ApiUtility        ( runApi
+import ApiUtility        ( runApi, runApi_
                          , apiDbGetSingle, apiDbGetMultiple, apiDbInsert, apiDbUpdate, apiDbDelete )
 import Core              ( BrandyActionM )
 import DataAccess.Users  ( getAllUsers, getUserByKey, insertUser, updateUser, deleteUser )
@@ -37,5 +37,5 @@ apiUpdateUser keyText = runApi $
     apiDbUpdate keyText updateUser
 
 apiDeleteUser :: T.Text -> BrandyActionM ()
-apiDeleteUser keyText = runApi $
+apiDeleteUser keyText = runApi_ $
     apiDbDelete keyText deleteUser

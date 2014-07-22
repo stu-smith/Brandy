@@ -17,14 +17,14 @@ import Network.HTTP.Types.Status   ( badRequest400 )
 
 import ApiUtility                  ( Validate(..), apiFail )
 import Database                    ( JsonDataAccessMapping(..) )
-import Schema
+import qualified Schema as DB
 
 
 data PrivateUser = PrivateUser
     { displayName :: T.Text
     , email       :: T.Text
     }
-  deriving (Show, Eq, Generic)
+  deriving (Generic)
 
 instance ToJSON PrivateUser
 instance FromJSON PrivateUser
@@ -35,14 +35,14 @@ instance Validate PrivateUser where
         | T.null . email       $ userPre = apiFail badRequest400 "Missing email."
         | otherwise                      = right userPre
 
-privateUserMapping :: JsonDataAccessMapping PrivateUser User
+privateUserMapping :: JsonDataAccessMapping PrivateUser DB.User
 privateUserMapping = JsonDataAccessMapping
     {
-        jsonToDataAccess = \(PrivateUser uDisplayName uEmail) -> User
-            { userDisplayName = uDisplayName
-            , userEmail       = uEmail
+        jsonToDataAccess = \(PrivateUser uDisplayName uEmail) -> DB.User
+            { DB.userDisplayName = uDisplayName
+            , DB.userEmail       = uEmail
             },
-        dataAccessToJson = \(User uDisplayName uEmail) -> PrivateUser
+        dataAccessToJson = \(DB.User uDisplayName uEmail) -> PrivateUser
             { displayName = uDisplayName
             , email = uEmail
             }

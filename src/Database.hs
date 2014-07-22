@@ -9,6 +9,7 @@ module Database
   JsonDataAccessMapping(..)
 , runSql
 , runSqlMaybe
+, standardGetAll
 , standardGetByKey
 , standardInsert
 , standardUpdate
@@ -28,10 +29,11 @@ import Control.Monad.Trans.Class     ( MonadTrans )
 import Control.Monad.Trans.Control   ( MonadBaseControl )
 import Control.Monad.Trans.Resource  ( ResourceT )
 import Data.Either.Combinators       ( rightToMaybe )
-import Database.Persist              ( Key, get, insert, replace, delete )
+import Database.Persist              ( Key, get, insert, replace, delete, selectList )
 import Database.Persist.Class        ( PersistEntity, PersistEntityBackend )
 import Database.Persist.Sql          ( SqlPersistT, SqlBackend )
 import Database.Persist.Sqlite       ( runSqlite )
+import Database.Persist.Types        ( Entity(..) )
 import qualified Data.Text as T      ( Text )
 
 import Json.WithId                   ( WithId(..), addId )
@@ -60,20 +62,30 @@ runSqlMaybe action = do
         result <- (try $ runSqlite conn action) :: m (Either IOException a)
         return $ rightToMaybe result
 
+standardGetAll :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d)
+               => JsonDataAccessMapping j d -> DatabaseEnvironmentT [WithId j]
+standardGetAll (JsonDataAccessMapping _ dToJ) = do
+    dbs <- runSql $ selectList [] []
+    return $ map eToJ dbs
+  where
+    eToJ (Entity k v) = addId k $ dToJ v
+
 standardGetByKey :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d)
                  => JsonDataAccessMapping j d -> Key d -> DatabaseEnvironmentT (Maybe (WithId j))
 standardGetByKey (JsonDataAccessMapping _ dToJ) key = do
     maybeDb <- runSql $ get key
     return $ toApi <$> maybeDb
-  where toApi db = addId key $ dToJ db
+  where
+    toApi db = addId key $ dToJ db
 
 standardInsert :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d)
                => JsonDataAccessMapping j d -> j -> DatabaseEnvironmentT (Maybe (WithId j))
 standardInsert (JsonDataAccessMapping jToD dToJ) json = do
     maybeId <- runSqlMaybe $ insert db
     return $ toApi <$> maybeId
-  where db        = jToD json
-        toApi key = addId key $ dToJ db
+  where
+    db        = jToD json
+    toApi key = addId key $ dToJ db
 
 standardUpdate :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d)
                => JsonDataAccessMapping j d -> Key d -> j -> DatabaseEnvironmentT (Maybe (WithId j))

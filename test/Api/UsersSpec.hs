@@ -8,7 +8,7 @@ module Api.UsersSpec
 where
 
 import Control.Applicative        ( (<$>) )
-import Network.HTTP.Types.Status  ( ok200, badRequest400, notFound404, conflict409 )
+import Network.HTTP.Types.Status  ( ok200, noContent204, badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
@@ -31,7 +31,7 @@ spec = do
 
         it "should give empty list" $
             runTest $ \app -> do
-                users <- (jsonBody <$> app `get` "/api/users") :: IO [PublicUserSummary]
+                users <- (jsonBody <$> app `get` "/api/users") :: IO [WithId PublicUserSummary]
                 users `shouldSatisfy` null
 
     describe "get single user" $ do
@@ -123,23 +123,23 @@ spec = do
 
     describe "delete single user" $ do
 
-        it "should give 200 for bad key" $
+        it "should give 204 for bad key" $
             runTest $ \app -> do
                 status <- simpleStatus <$> app `delete` "/api/users/bad-key"
-                status `shouldBe` ok200
+                status `shouldBe` noContent204
 
-        it "should give 200 for missing key" $
+        it "should give 204 for missing key" $
             runTest $ \app -> do
                 status <- simpleStatus <$> app `delete` "/api/users/123"
-                status `shouldBe` ok200
+                status `shouldBe` noContent204
 
-        it "should give 200 for successful delete user" $
+        it "should give 204 for successful delete user" $
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` "/api/users") insertBody :: IO (WithId PrivateUser)
                 let uid = getId inserted
                 status <- simpleStatus <$> app `delete` ("/api/users" +/+ uid)
-                status `shouldBe` ok200
+                status `shouldBe` noContent204
 
         it "should actually delete the item" $
             runTest $ \app -> do
@@ -149,6 +149,6 @@ spec = do
                 get1status <- simpleStatus <$> app `get` ("/api/users" +/+ uid)
                 get1status `shouldBe` ok200
                 status <- simpleStatus <$> app `delete` ("/api/users" +/+ uid)
-                status `shouldBe` ok200
+                status `shouldBe` noContent204
                 get2status <- simpleStatus <$> app `get` ("/api/users" +/+ uid)
                 get2status `shouldBe` notFound404

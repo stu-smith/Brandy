@@ -7,6 +7,7 @@ module ApiUtility
 , readKeyOld
 , apiFail
 , runApi
+, runApi_
 , liftDB
 , liftWeb
 , apiDbGetSingle
@@ -28,7 +29,7 @@ import qualified Data.Text.Lazy as TL
                                    ( Text )
 import Database.Persist            ( Key, KeyBackend(Key), toPersistValue )
 import Data.Text.Read              ( decimal )
-import Network.HTTP.Types.Status   ( Status, badRequest400, notFound404, conflict409 )
+import Network.HTTP.Types.Status   ( Status, noContent204, badRequest400, notFound404, conflict409 )
 import Web.Scotty.Trans            ( json, text, status, body )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
@@ -39,15 +40,23 @@ class Validate a where
 
 
 apiFail :: Monad m => Status -> TL.Text -> EitherT ApiError m a
-apiFail s m
-    = left $ ApiError s m
+apiFail s m =
+    left $ ApiError s m
 
 runApi :: ToJSON v => EitherT ApiError BrandyActionM v -> BrandyActionM ()
-runApi f = do
+runApi =
+    runApiInternal json
+
+runApi_ :: EitherT ApiError BrandyActionM () -> BrandyActionM ()
+runApi_ =
+    runApiInternal $ const $ status noContent204
+
+runApiInternal :: ToJSON v => (v -> BrandyActionM ()) -> EitherT ApiError BrandyActionM v -> BrandyActionM ()
+runApiInternal respond f = do
     e <- runEitherT f
     case e of
         Left (ApiError s m) -> status s >> text m
-        Right v             -> json v
+        Right v             -> respond v
 
 liftDB :: DatabaseEnvironmentT a -> EitherT ApiError BrandyActionM a
 liftDB = lift . lift
