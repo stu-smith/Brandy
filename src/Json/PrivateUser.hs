@@ -9,6 +9,7 @@ module Json.PrivateUser
 )
 where
 
+import Control.Applicative         ( (<$>), (<*>) )
 import Control.Monad.Trans.Either  ( right )
 import Data.Aeson                  ( ToJSON, FromJSON )
 import Data.Text as T              ( Text, null )
@@ -30,20 +31,14 @@ instance ToJSON PrivateUser
 instance FromJSON PrivateUser
 
 instance Validate PrivateUser where
-    validate userPre
-        | T.null . displayName $ userPre = apiFail badRequest400 "Missing displayName."
-        | T.null . email       $ userPre = apiFail badRequest400 "Missing email."
-        | otherwise                      = right userPre
+    validate user
+        | T.null . displayName $ user = wrong "Missing displayName."
+        | T.null . email       $ user = wrong "Missing email."
+        | otherwise                   = right user
+      where
+        wrong = apiFail badRequest400
 
 privateUserMapping :: JsonDataAccessMapping PrivateUser DB.User
 privateUserMapping = JsonDataAccessMapping
-    {
-        jsonToDataAccess = \(PrivateUser uDisplayName uEmail) -> DB.User
-            { DB.userDisplayName = uDisplayName
-            , DB.userEmail       = uEmail
-            },
-        dataAccessToJson = \(DB.User uDisplayName uEmail) -> PrivateUser
-            { displayName = uDisplayName
-            , email = uEmail
-            }
-    }
+    (DB.User     <$>        displayName <*>        email)
+    (PrivateUser <$> DB.userDisplayName <*> DB.userEmail)

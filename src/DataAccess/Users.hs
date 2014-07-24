@@ -21,28 +21,31 @@ import Database                                     ( runSql
 import Json.PublicUserSummary as PublicUserSummary  ( PublicUserSummary(..) )
 import Json.PrivateUser as PrivateUser              ( PrivateUser(..), privateUserMapping )
 import Json.WithId                                  ( WithId(..), addId )
-import Schema
+import qualified Schema as DB
 
 
 getAllUsers :: DatabaseEnvironmentT [WithId PublicUserSummary]
 getAllUsers =
     runSql $ do
         users <- select $ from $ \u ->
-                 return (u ^. UserId, u ^. UserDisplayName)
+                 return (u ^. DB.UserId, u ^. DB.UserDisplayName)
         return $ map dToJ users
   where
     dToJ (Value uId, Value uDisplayName) =
         addId uId $ PublicUserSummary uDisplayName
 
-
-getUserByKey :: Key User -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-getUserByKey = standardGetByKey privateUserMapping
+getUserByKey :: Key DB.User -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+getUserByKey =
+    standardGetByKey privateUserMapping
 
 insertUser :: PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-insertUser = standardInsert privateUserMapping
+insertUser =
+    standardInsert privateUserMapping
 
-updateUser :: Key User -> PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-updateUser = standardUpdate privateUserMapping
+updateUser :: Key DB.User -> PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+updateUser =
+    standardUpdate privateUserMapping
 
-deleteUser :: Key User -> DatabaseEnvironmentT ()
-deleteUser = standardDelete
+deleteUser :: Key DB.User -> DatabaseEnvironmentT ()
+deleteUser =
+    standardDelete

@@ -6,15 +6,10 @@ module ApiUtility
   Validate(..)
 , readKeyOld
 , apiFail
-, runApi
-, runApi_
-, liftDB
-, liftWeb
-, apiDbGetSingle
-, apiDbGetMultiple
-, apiDbInsert
-, apiDbUpdate
-, apiDbDelete
+, runApi, runApi_
+, liftDB, liftWeb
+, apiDbGetSingle, apiDbGetMultiple
+, apiDbInsert, apiDbUpdate, apiDbDelete
 )
 where
 
@@ -64,7 +59,6 @@ liftDB = lift . lift
 liftWeb :: BrandyActionM a -> EitherT ApiError BrandyActionM a
 liftWeb = lift
 
-
 validateBody :: (FromJSON a, Validate a) => EitherT ApiError BrandyActionM a
 validateBody = do
     maybeValue <- decode <$> liftWeb body
@@ -99,7 +93,7 @@ apiDbUpdate keyText dbUpdate = do
 
 apiDbDelete :: T.Text -> (Key d -> DatabaseEnvironmentT ()) -> EitherT ApiError BrandyActionM ()
 apiDbDelete keyText dbDelete =
-    readKey_ keyText (liftDB . dbDelete)
+    readKey_ keyText $ liftDB . dbDelete
 
 readKeyOld :: T.Text -> Maybe (Key a)
 readKeyOld s =
@@ -111,7 +105,7 @@ readKey :: Monad m => T.Text -> EitherT ApiError m (Key a)
 readKey s =
     case decimal s of
         Right (v, "") -> right $ mkKey v
-        _             -> left $ ApiError notFound404 "Not found."
+        _             -> left  $ ApiError notFound404 "Not found."
 
 readKey_ :: Monad m => T.Text -> (Key a -> EitherT ApiError m ()) -> EitherT ApiError m ()
 readKey_ s a =
@@ -124,9 +118,15 @@ mkKey =
     Key . toPersistValue
 
 validateDbExists :: Maybe a -> EitherT ApiError BrandyActionM a
-validateDbExists Nothing  = apiFail notFound404 "Not found."
-validateDbExists (Just u) = return u
+validateDbExists =
+    validateDbInternal notFound404 "Not found."
 
 validateDbInsert :: Maybe a -> EitherT ApiError BrandyActionM a
-validateDbInsert Nothing  = apiFail conflict409 "Already in use."
-validateDbInsert (Just k) = return k
+validateDbInsert =
+    validateDbInternal conflict409 "Already in use."
+
+validateDbInternal :: Status -> TL.Text -> Maybe a -> EitherT ApiError BrandyActionM a
+validateDbInternal s msg db =
+    case db of
+        Nothing -> apiFail s msg
+        Just v  -> return v
