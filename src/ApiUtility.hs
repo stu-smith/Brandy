@@ -4,7 +4,6 @@
 module ApiUtility
 (
   Validate(..)
-, readKeyOld
 , apiFail
 , runApi, runApi_
 , liftDB, liftWeb
@@ -30,9 +29,9 @@ import Web.Scotty.Trans            ( json, text, status, body )
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
 import Json.WithId                 ( WithId(..) )
 
+
 class Validate a where
     validate :: Monad m => a -> EitherT ApiError m a
-
 
 apiFail :: Monad m => Status -> TL.Text -> EitherT ApiError m a
 apiFail s m =
@@ -95,23 +94,23 @@ apiDbDelete :: T.Text -> (Key d -> DatabaseEnvironmentT ()) -> EitherT ApiError 
 apiDbDelete keyText dbDelete =
     readKey_ keyText $ liftDB . dbDelete
 
-readKeyOld :: T.Text -> Maybe (Key a)
-readKeyOld s =
-    case decimal s of
-        Right (v, "") -> Just $ mkKey v
-        _             -> Nothing
-
 readKey :: Monad m => T.Text -> EitherT ApiError m (Key a)
-readKey s =
-    case decimal s of
-        Right (v, "") -> right $ mkKey v
-        _             -> left  $ ApiError notFound404 "Not found."
+readKey =
+    readKeyInternal (right . mkKey)
+                    (left $ ApiError notFound404 "Not found.")
 
 readKey_ :: Monad m => T.Text -> (Key a -> EitherT ApiError m ()) -> EitherT ApiError m ()
 readKey_ s a =
+    readKeyInternal (a . mkKey)
+                    (return ())
+                    s
+    >> right ()
+
+readKeyInternal :: (Int64 -> r) -> r -> T.Text -> r
+readKeyInternal rf lf s =
     case decimal s of
-        Right (v, "") -> a (mkKey v) >> right ()
-        _             ->                right ()
+        Right (v, "") -> rf v
+        _             -> lf
 
 mkKey :: Int64 -> Key a
 mkKey =

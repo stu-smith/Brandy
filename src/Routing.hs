@@ -10,8 +10,6 @@ where
 import Web.Scotty.Trans  ( get, put, post, delete, html, param )
 
 import Core              ( BrandyScottyM )
-import Api.Resources     ( apiGetResources, apiGetResourceByKey
-                         , apiInsertResource, apiDeleteResourceByKey )
 import Api.Users         ( apiGetUsers, apiGetUserByKey, apiAddUser, apiUpdateUser, apiDeleteUser )
 import Api.Tags          ( apiGetTags, apiGetTagByKey, apiAddTag )
 
@@ -31,11 +29,6 @@ routes = do
     get    tagElement         $ apiGetTagByKey         =<< key
     post   tagCollection        apiAddTag
 
-    get    resourceCollection   apiGetResources
-    get    resourceElement    $ apiGetResourceByKey    =<< key
-    post   resourceElement      apiInsertResource
-    delete resourceElement    $ apiDeleteResourceByKey =<< key
-
   where
     
     root               = "/"
@@ -43,7 +36,5 @@ routes = do
     userElement        = "/api/users/:key"
     tagCollection      = "/api/tags"
     tagElement         = "/api/tags/:key"
-    resourceCollection = "/api/resources"
-    resourceElement    = "/api/resources/:key"
 
     key                = param "key"
