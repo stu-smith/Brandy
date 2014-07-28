@@ -13,6 +13,7 @@ module ApiUtility
 where
 
 import Control.Applicative         ( (<$>) )
+import Control.Monad               ( void )
 import Control.Monad.Trans         ( lift )
 import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
 import Data.Aeson                  ( ToJSON, FromJSON, decode )
@@ -49,8 +50,8 @@ runApiInternal :: ToJSON v => (v -> BrandyActionM ()) -> EitherT ApiError Brandy
 runApiInternal respond f = do
     e <- runEitherT f
     case e of
-        Left (ApiError s m) -> status s >> text m
         Right v             -> respond v
+        Left (ApiError s m) -> status s >> text m
 
 liftDB :: DatabaseEnvironmentT a -> EitherT ApiError BrandyActionM a
 liftDB = lift . lift
@@ -101,10 +102,7 @@ readKey =
 
 readKey_ :: Monad m => T.Text -> (Key a -> EitherT ApiError m ()) -> EitherT ApiError m ()
 readKey_ s a =
-    readKeyInternal (a . mkKey)
-                    (return ())
-                    s
-    >> right ()
+    void $ readKeyInternal (a . mkKey) (return ()) s
 
 readKeyInternal :: (Int64 -> r) -> r -> T.Text -> r
 readKeyInternal rf lf s =
@@ -127,5 +125,5 @@ validateDbInsert =
 validateDbInternal :: Status -> TL.Text -> Maybe a -> EitherT ApiError BrandyActionM a
 validateDbInternal s msg db =
     case db of
-        Nothing -> apiFail s msg
         Just v  -> return v
+        Nothing -> apiFail s msg

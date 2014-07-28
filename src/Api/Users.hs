@@ -1,6 +1,4 @@
 
-{-# LANGUAGE OverloadedStrings #-}
-
 module Api.Users
 (
   apiGetUsers
