@@ -1,6 +1,5 @@
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 
 module TestUtility
 (
@@ -42,7 +41,7 @@ runTest :: (Application -> IO ()) -> IO ()
 runTest test =
     withSystemTempFile "brandytest.sqlite3" $ \f _ -> do
         let file = T.pack f
-        _ <- runReaderT (runSql $ runMigrationSilent migrate) file
+        _   <- runReaderT (runSql . runMigrationSilent $ migrate) file
         app <- liftIO $ scottyApp file routes
         test app
 
@@ -61,7 +60,7 @@ put :: (ToJSON a) => Application -> T.Text -> a -> IO SResponse
 put =
     actionWithBody $ jsonRequestWithBody methodPut
 
-delete :: Application -> T.Text ->IO SResponse
+delete :: Application -> T.Text -> IO SResponse
 delete app path =
     actionWithoutBody (jsonRequest methodDelete) app path
 
@@ -96,4 +95,5 @@ jsonRequestWithBody method payload =
         }
 
 encodeUri :: T.Text -> BS.ByteString
-encodeUri = encodeUtf8
+encodeUri =
+    encodeUtf8

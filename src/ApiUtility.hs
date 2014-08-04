@@ -54,17 +54,18 @@ runApiInternal respond f = do
         Left (ApiError s m) -> status s >> text m
 
 liftDB :: DatabaseEnvironmentT a -> EitherT ApiError BrandyActionM a
-liftDB = lift . lift
+liftDB =
+    lift . lift
 
 liftWeb :: BrandyActionM a -> EitherT ApiError BrandyActionM a
-liftWeb = lift
+liftWeb =
+    lift
 
 validateBody :: (FromJSON a, Validate a) => EitherT ApiError BrandyActionM a
-validateBody = do
-    maybeValue <- decode <$> liftWeb body
-    case maybeValue of
-        Nothing -> apiFail badRequest400 "Invalid request body."
-        Just v  -> validate v
+validateBody =
+    decode <$> liftWeb body >>= maybe invalid validate
+  where
+    invalid = apiFail badRequest400 "Invalid request body."
 
 apiDbGetSingle :: T.Text -> (Key d -> DatabaseEnvironmentT (Maybe a)) -> EitherT ApiError BrandyActionM a
 apiDbGetSingle keyText dbGet = do
@@ -123,7 +124,5 @@ validateDbInsert =
     validateDbInternal conflict409 "Already in use."
 
 validateDbInternal :: Status -> TL.Text -> Maybe a -> EitherT ApiError BrandyActionM a
-validateDbInternal s msg db =
-    case db of
-        Just v  -> return v
-        Nothing -> apiFail s msg
+validateDbInternal s msg =
+    maybe (apiFail s msg) return

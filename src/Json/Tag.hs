@@ -12,7 +12,7 @@ where
 import Control.Applicative         ( (<$>) )
 import Control.Monad.Trans.Either  ( right )
 import Data.Aeson                  ( ToJSON, FromJSON )
-import Data.Text as T              ( Text, null )
+import qualified Data.Text as T    ( Text, null )
 import GHC.Generics                ( Generic )
 import Network.HTTP.Types.Status   ( badRequest400 )
 

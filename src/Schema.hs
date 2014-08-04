@@ -11,7 +11,8 @@
 module Schema
 where
 
-import Data.Text            ( Text )
+import qualified Data.Text as T
+                            ( Text )
 import Data.Time            ( UTCTime )
 import Database.Persist.TH  ( share, mkPersist, sqlOnlySettings, mkMigrate, persistLowerCase )
 
@@ -19,24 +20,23 @@ import Database.Persist.TH  ( share, mkPersist, sqlOnlySettings, mkMigrate, pers
 share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
 
     User
-        email        Text
-        displayName  Text
+        email        T.Text
+        displayName  T.Text
         UniqueUserEmail        email
         UniqueUserDisplayName  displayName
       deriving Show Read Eq Ord
 
     Tag
-        name         Text
+        name         T.Text
         UniqueTagName           name
       deriving Show Read Eq Ord
 
     Resource json
-        path         Text
+        path         T.Text
         createdBy    UserId
         createdAt    UTCTime
         public       Bool
-        contentType  Text
-        content      Text
+        contentType  T.Text
         UniqueResourcePath      path
       deriving Show Read Eq Ord
 
