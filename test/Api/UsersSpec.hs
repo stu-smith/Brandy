@@ -8,7 +8,8 @@ module Api.UsersSpec
 where
 
 import Control.Applicative        ( (<$>) )
-import Network.HTTP.Types.Status  ( ok200, noContent204, badRequest400, notFound404, conflict409 )
+import Network.HTTP.Types.Status  ( ok200, created201, noContent204
+                                  , badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
@@ -70,17 +71,17 @@ spec = do
                 status <- simpleStatus <$> (app `post` usersBase) insertBody
                 status `shouldBe` badRequest400
 
-        it "should give 200 for add user" $
+        it "should give 201 for add user" $
             runTest $ \app -> do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 status <- simpleStatus <$> (app `post` usersBase) insertBody
-                status `shouldBe` ok200
+                status `shouldBe` created201
 
         it "should give 409 for duplicate email" $
             runTest $ \app -> do
                 let insertBody1 = PrivateUser "Display Name 1" "email@example.com"
                 status1 <- simpleStatus <$> (app `post` usersBase) insertBody1
-                status1 `shouldBe` ok200
+                status1 `shouldBe` created201
                 let insertBody2 = PrivateUser "Display Name 2" "email@example.com"
                 status2 <- simpleStatus <$> (app `post` usersBase) insertBody2
                 status2 `shouldBe` conflict409
@@ -89,7 +90,7 @@ spec = do
             runTest $ \app -> do
                 let insertBody1 = PrivateUser "Display Name" "email1@example.com"
                 status1 <- simpleStatus <$> (app `post` usersBase) insertBody1
-                status1 `shouldBe` ok200
+                status1 `shouldBe` created201
                 let insertBody2 = PrivateUser "Display Name" "email2@example.com"
                 status2 <- simpleStatus <$> (app `post` usersBase) insertBody2
                 status2 `shouldBe` conflict409

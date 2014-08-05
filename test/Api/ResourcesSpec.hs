@@ -8,7 +8,8 @@ module Api.ResourcesSpec
 where
 
 import Control.Applicative        ( (<$>) )
-import Network.HTTP.Types.Status  ( ok200, noContent204, badRequest400, notFound404, conflict409 )
+import Network.HTTP.Types.Status  ( ok200, created201, noContent204
+                                  , badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
@@ -72,7 +73,7 @@ spec = do
                 status <- simpleStatus <$> (app `post` resourcesBase) insertBody
                 status `shouldBe` badRequest400
 
-        it "should give 200 for add resource" $
+        it "should give 201 for add resource" $
             runTestWithUser $ \app uid -> do
                 let insertBody = Resource { path = "/path/to/res"
                                           , createdByUserId = uid
@@ -80,7 +81,7 @@ spec = do
                                           , public = True
                                           , contentType = "x-application/any" }
                 status <- simpleStatus <$> (app `post` resourcesBase) insertBody
-                status `shouldBe` ok200
+                status `shouldBe` created201
 
         it "should give 409 for duplicate path" $
             runTestWithUser $ \app uid -> do

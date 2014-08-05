@@ -8,7 +8,8 @@ module Api.TagsSpec
 where
 
 import Control.Applicative        ( (<$>) )
-import Network.HTTP.Types.Status  ( ok200, noContent204, badRequest400, notFound404, conflict409 )
+import Network.HTTP.Types.Status  ( ok200, created201, noContent204
+                                  , badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
@@ -63,17 +64,17 @@ spec = do
                 status <- simpleStatus <$> (app `post` tagsBase) insertBody
                 status `shouldBe` badRequest400
 
-        it "should give 200 for add tag" $
+        it "should give 201 for add tag" $
             runTest $ \app -> do
                 let insertBody = Tag "tag-name"
                 status <- simpleStatus <$> (app `post` tagsBase) insertBody
-                status `shouldBe` ok200
+                status `shouldBe` created201
 
         it "should give 409 for duplicate name" $
             runTest $ \app -> do
                 let insertBody1 = Tag "tag-name"
                 status1 <- simpleStatus <$> (app `post` tagsBase) insertBody1
-                status1 `shouldBe` ok200
+                status1 `shouldBe` created201
                 let insertBody2 = Tag "tag-name"
                 status2 <- simpleStatus <$> (app `post` tagsBase) insertBody2
                 status2 `shouldBe` conflict409

@@ -5,7 +5,7 @@ module ApiUtility
 (
   Validate(..)
 , apiFail
-, runApi, runApi_
+, runApiGet, runApiPut, runApiPost, runApiDelete
 , liftDB, liftWeb
 , apiDbGetSingle, apiDbGetMultiple
 , apiDbInsert, apiDbUpdate, apiDbDelete
@@ -24,7 +24,8 @@ import qualified Data.Text.Lazy as TL
                                    ( Text )
 import Database.Persist            ( Key, KeyBackend(Key), toPersistValue )
 import Data.Text.Read              ( decimal )
-import Network.HTTP.Types.Status   ( Status, noContent204, badRequest400, notFound404, conflict409 )
+import Network.HTTP.Types.Status   ( Status, ok200, created201, noContent204
+                                   , badRequest400, notFound404, conflict409 )
 import Web.Scotty.Trans            ( json, text, status, body )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
@@ -38,13 +39,25 @@ apiFail :: Monad m => Status -> TL.Text -> EitherT ApiError m a
 apiFail s m =
     left $ ApiError s m
 
-runApi :: ToJSON v => EitherT ApiError BrandyActionM v -> BrandyActionM ()
-runApi =
-    runApiInternal json
+runApiGet :: ToJSON v => EitherT ApiError BrandyActionM v -> BrandyActionM ()
+runApiGet =
+    runApi ok200
 
-runApi_ :: EitherT ApiError BrandyActionM () -> BrandyActionM ()
-runApi_ =
+runApiPut :: ToJSON v => EitherT ApiError BrandyActionM v -> BrandyActionM ()
+runApiPut =
+    runApi ok200
+
+runApiPost :: ToJSON v => EitherT ApiError BrandyActionM v -> BrandyActionM ()
+runApiPost =
+    runApi created201
+
+runApiDelete :: EitherT ApiError BrandyActionM () -> BrandyActionM ()
+runApiDelete =
     runApiInternal $ const $ status noContent204
+
+runApi :: ToJSON v => Status -> EitherT ApiError BrandyActionM v -> BrandyActionM ()
+runApi s =
+    runApiInternal (\v -> status s >> json v)
 
 runApiInternal :: ToJSON v => (v -> BrandyActionM ()) -> EitherT ApiError BrandyActionM v -> BrandyActionM ()
 runApiInternal respond f = do
