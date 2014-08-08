@@ -20,7 +20,7 @@ data Resource = Resource
     , public          :: Bool
     , contentType     :: T.Text
     }
-  deriving (Show, Generic)
+  deriving (Generic)
 
 instance ToJSON Resource
 instance FromJSON Resource

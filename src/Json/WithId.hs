@@ -23,7 +23,6 @@ data WithId a = WithId
     { id     :: T.Text
     , value :: a
     }
-  deriving (Show, Eq)
 
 getId :: WithId a -> T.Text
 getId (WithId i _) = i

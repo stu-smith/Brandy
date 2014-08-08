@@ -15,7 +15,7 @@ import GHC.Generics            ( Generic )
 data PublicUserSummary = PublicUserSummary
     { displayName :: T.Text
     }
-  deriving (Show, Generic)
+  deriving (Generic)
 
 instance ToJSON PublicUserSummary
 instance FromJSON PublicUserSummary

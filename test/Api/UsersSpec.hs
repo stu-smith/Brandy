@@ -1,5 +1,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Api.UsersSpec
 (
@@ -14,11 +16,14 @@ import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
 import Json.PrivateUser           ( PrivateUser(..) )
-import Json.PublicUserSummary     ( PublicUserSummary )
+import Json.PublicUserSummary     ( PublicUserSummary(..) )
 import Json.WithId                ( WithId(..), getId )
 import Uri                        ( (+/+) )
 import TestUtility                ( runTest, get, post, put, delete, jsonBody )
 
+
+deriving instance Show PublicUserSummary
+deriving instance Show a => Show (WithId a)
 
 spec :: Spec
 spec = do

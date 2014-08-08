@@ -24,7 +24,7 @@ import qualified Schema as DB
 data Tag = Tag
     { name :: T.Text
     }
-  deriving (Show, Generic)
+  deriving (Generic)
 
 instance ToJSON Tag
 instance FromJSON Tag

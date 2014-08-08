@@ -1,5 +1,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Api.TagsSpec
 (
@@ -18,6 +20,9 @@ import Json.Tag                   ( Tag(..) )
 import Json.WithId                ( WithId(..), getId )
 import Uri                        ( (+/+) )
 
+
+deriving instance Show Tag
+deriving instance Show a => Show (WithId a)
 
 spec :: Spec
 spec = do

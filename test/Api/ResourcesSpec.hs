@@ -1,5 +1,7 @@
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Api.ResourcesSpec
 (
@@ -19,6 +21,9 @@ import TestUtility                ( runTest, get, put, post, delete, jsonBody )
 import Uri                        ( (+/+) )
 import UserTestUtility            ( runTestWithUser )
 
+
+deriving instance Show Resource
+deriving instance Show a => Show (WithId a)
 
 spec :: Spec
 spec = do

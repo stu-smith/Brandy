@@ -1,6 +1,9 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Json.WithIdSpec
 (
@@ -17,6 +20,8 @@ import qualified Data.Text as T
 
 import Json.WithId   ( WithId(..) )
 
+deriving instance Show a => Show (WithId a)
+deriving instance Eq a => Eq (WithId a)
 
 spec :: Spec
 spec =
