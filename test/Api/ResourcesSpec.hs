@@ -55,9 +55,9 @@ spec = do
                 status `shouldBe` notFound404
 
         it "should give 200 for get resource" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
@@ -69,9 +69,9 @@ spec = do
     describe "add single resource" $ do
 
         it "should give 400 for missing path" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody = Resource { path = ""
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
@@ -79,9 +79,9 @@ spec = do
                 status `shouldBe` badRequest400
 
         it "should give 201 for add resource" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
@@ -89,16 +89,16 @@ spec = do
                 status `shouldBe` created201
 
         it "should give 409 for duplicate path" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody1 = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
                 status1 <- simpleStatus <$> (app `post` resourcesBase) insertBody1
                 status1 `shouldBe` ok200
                 let insertBody2 = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
@@ -108,16 +108,16 @@ spec = do
     describe "update single resource" $ do
 
         it "should give 400 for missing name" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
                 inserted <- jsonBody <$> (app `post` resourcesBase) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 let updateBody = Resource { path = ""
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
@@ -125,16 +125,16 @@ spec = do
                 status `shouldBe` badRequest400
 
         it "should give 200 for update resource" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
                 inserted <- jsonBody <$> (app `post` resourcesBase) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 let updateBody = Resource { path = "/new/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
@@ -154,9 +154,9 @@ spec = do
                 status `shouldBe` noContent204
 
         it "should give 204 for successful delete resource" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
@@ -166,9 +166,9 @@ spec = do
                 status `shouldBe` noContent204
 
         it "should actually delete the item" $
-            runTestWithUser $ \app uid -> do
+            runTestWithUser $ \app _ -> do
                 let insertBody = Resource { path = "/path/to/res"
-                                          , createdByUserId = uid
+                                          , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }

@@ -17,19 +17,17 @@ import Control.Monad               ( void )
 import Control.Monad.Trans         ( lift )
 import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
 import Data.Aeson                  ( ToJSON, FromJSON, decode )
-import Data.Int                    ( Int64 )
 import qualified Data.Text as T
                                    ( Text )
 import qualified Data.Text.Lazy as TL
                                    ( Text )
-import Database.Persist            ( Key, KeyBackend(Key), toPersistValue )
-import Data.Text.Read              ( decimal )
+import Database.Persist            ( Key )
 import Network.HTTP.Types.Status   ( Status, ok200, created201, noContent204
                                    , badRequest400, notFound404, conflict409 )
 import Web.Scotty.Trans            ( json, text, status, body )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
-import Json.WithId                 ( WithId(..) )
+import Json.WithId                 ( WithId(..), textToId )
 
 
 class Validate a where
@@ -111,22 +109,16 @@ apiDbDelete keyText dbDelete =
 
 readKey :: Monad m => T.Text -> EitherT ApiError m (Key a)
 readKey =
-    readKeyInternal (right . mkKey)
+    readKeyInternal right
                     (left $ ApiError notFound404 "Not found.")
 
 readKey_ :: Monad m => T.Text -> (Key a -> EitherT ApiError m ()) -> EitherT ApiError m ()
 readKey_ s a =
-    void $ readKeyInternal (a . mkKey) (return ()) s
+    void $ readKeyInternal a (return ()) s
 
-readKeyInternal :: (Int64 -> r) -> r -> T.Text -> r
-readKeyInternal rf lf s =
-    case decimal s of
-        Right (v, "") -> rf v
-        _             -> lf
-
-mkKey :: Int64 -> Key a
-mkKey =
-    Key . toPersistValue
+readKeyInternal :: (Key d -> r) -> r -> T.Text -> r
+readKeyInternal rf lf =
+    maybe lf rf . textToId
 
 validateDbExists :: Maybe a -> EitherT ApiError BrandyActionM a
 validateDbExists =
