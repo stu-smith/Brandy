@@ -1,5 +1,6 @@
 
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Json.Resource
 (
@@ -7,11 +8,15 @@ module Json.Resource
 )
 where
 
-import Data.Aeson           ( ToJSON, FromJSON )
+import Control.Monad.Trans.Either  ( right )
+import Data.Aeson                  ( ToJSON, FromJSON )
 import qualified Data.Text as T
-                            ( Text )
-import Data.Time            ( UTCTime )
-import GHC.Generics         ( Generic )
+                                   ( Text, null )
+import Data.Time                   ( UTCTime )
+import GHC.Generics                ( Generic )
+import Network.HTTP.Types.Status   ( badRequest400 )
+
+import ApiUtility                  ( Validate(..), apiFail )
 
 
 data Resource = Resource
@@ -25,3 +30,10 @@ data Resource = Resource
 
 instance ToJSON Resource
 instance FromJSON Resource
+
+instance Validate Resource where
+    validate resource
+        | T.null . path $ resource = wrong "Missing path."
+        | otherwise                = right resource
+      where
+        wrong = apiFail badRequest400
