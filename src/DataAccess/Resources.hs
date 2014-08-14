@@ -7,16 +7,19 @@ module DataAccess.Resources
 )
 where
 
+import Control.Applicative     ( (<$>), (<*>) )
+import Control.Monad.IO.Class  ( liftIO )
 import qualified Data.Text as T
-                           ( Text )
-import Data.Time           ( UTCTime )
-import Database.Esqueleto  ( Esqueleto, Value(..), val, select, from, where_, (^.), (==.) )
-import Database.Persist    ( Key, Entity )
+                               ( Text )
+import Data.Time               ( UTCTime )
+import Data.Time.Clock         ( getCurrentTime )
+import Database.Esqueleto      ( Esqueleto, Value(..), val, select, from, where_, (^.), (==.) )
+import Database.Persist        ( Key, Entity, insert )
 
-import Core                ( DatabaseEnvironmentT )
-import Database            ( runSql )
-import Json.Resource       ( Resource(..) )
-import Json.WithId         ( WithId(..), addId, idToText )
+import Core                    ( DatabaseEnvironmentT )
+import Database                ( runSql, runSqlMaybe )
+import Json.Resource           ( Resource(..) )
+import Json.WithId             ( WithId(..), addId, idToText )
 import qualified Schema as DB
 
 
@@ -25,7 +28,7 @@ getAllResources =
     runSql $ do
         resources <- select $ from $ \r ->
                      return $ columnsWithoutContent r
-        return $ map dToJ resources
+        return $ map dvToJ resources
 
 getResourceByKey :: Key DB.Resource -> DatabaseEnvironmentT (Maybe (WithId Resource))
 getResourceByKey key =
@@ -35,28 +38,45 @@ getResourceByKey key =
                     return $ columnsWithoutContent r
         case resource of
             []     -> return Nothing
-            (r:[]) -> return $ Just $ dToJ r
+            (r:[]) -> return $ Just $ dvToJ r
             _      -> undefined 
 
-insertResource :: Resource -> DatabaseEnvironmentT (Maybe (WithId (Resource)))
-insertResource =
-    undefined
+insertResource :: Resource -> DatabaseEnvironmentT (Maybe (WithId Resource))
+insertResource json = do
+    db      <- liftIO $ jToNewD json _
+    maybeId <- runSqlMaybe $ insert db
+    return $ toApi db <$> maybeId
+  where
+    toApi db key = addId key $ dToJ db
 
-dToJ :: ( Value (Key DB.Resource)
-        , Value T.Text
-        , Value (Key DB.User)
-        , Value UTCTime
-        , Value Bool
-        , Value T.Text
-        ) -> WithId Resource
-dToJ ( Value rId
-     , Value rPath
-     , Value rCreatedBy
-     , Value rCreatedAt
-     , Value rPublic
-     , Value rContentType
-     ) =
+dvToJ :: ( Value (Key DB.Resource)
+         , Value T.Text
+         , Value (Key DB.User)
+         , Value UTCTime
+         , Value Bool
+         , Value T.Text
+         ) -> WithId Resource
+dvToJ ( Value rId
+      , Value rPath
+      , Value rCreatedBy
+      , Value rCreatedAt
+      , Value rPublic
+      , Value rContentType
+      ) =
     addId rId $ Resource rPath (Just $ idToText rCreatedBy) (Just rCreatedAt) rPublic rContentType
+
+dToJ :: DB.Resource -> Resource
+dToJ =
+    Resource <$> DB.resourcePath
+             <*> Just . idToText . DB.resourceCreatedBy
+             <*> Just . DB.resourceCreatedAt
+             <*> DB.resourcePublic
+             <*> DB.resourceContentType
+
+jToNewD :: Resource -> Key DB.User -> IO DB.Resource
+jToNewD (Resource rPath _ _ rPublic rContentType) user = do
+    now <- getCurrentTime
+    return $ DB.Resource rPath user now rPublic rContentType
 
 columnsWithoutContent :: Esqueleto query expr backend
                       => expr (Entity DB.Resource)
