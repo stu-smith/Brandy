@@ -41,9 +41,9 @@ getResourceByKey key =
             (r:[]) -> return $ Just $ dvToJ r
             _      -> undefined 
 
-insertResource :: Resource -> DatabaseEnvironmentT (Maybe (WithId Resource))
-insertResource json = do
-    db      <- liftIO $ jToNewD json _
+insertResource :: Key DB.User -> Resource -> DatabaseEnvironmentT (Maybe (WithId Resource))
+insertResource userId json = do
+    db      <- liftIO $ jToNewD json userId
     maybeId <- runSqlMaybe $ insert db
     return $ toApi db <$> maybeId
   where

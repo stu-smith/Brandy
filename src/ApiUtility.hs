@@ -9,6 +9,7 @@ module ApiUtility
 , liftDB, liftWeb
 , apiDbGetSingle, apiDbGetMultiple
 , apiDbInsert, apiDbUpdate, apiDbDelete
+, authenticatedUserId
 )
 where
 
@@ -28,6 +29,7 @@ import Web.Scotty.Trans            ( json, text, status, body )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
 import Json.WithId                 ( WithId(..), textToId )
+import qualified Schema as DB
 
 
 class Validate a where
@@ -131,3 +133,7 @@ validateDbInsert =
 validateDbInternal :: Status -> TL.Text -> Maybe a -> EitherT ApiError BrandyActionM a
 validateDbInternal s msg =
     maybe (apiFail s msg) return
+
+authenticatedUserId :: EitherT ApiError BrandyActionM (Key DB.User)
+authenticatedUserId =
+    undefined

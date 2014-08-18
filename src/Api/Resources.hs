@@ -13,7 +13,8 @@ import qualified Data.Text as T
                              ( Text )
 
 import ApiUtility            ( runApiGet, runApiPost
-                             , apiDbGetMultiple, apiDbGetSingle, apiDbInsert )
+                             , apiDbGetMultiple, apiDbGetSingle, apiDbInsert
+                             , authenticatedUserId )
 import Core                  ( BrandyActionM )
 import DataAccess.Resources  ( getAllResources, getResourceByKey, insertResource )
 
@@ -26,5 +27,6 @@ apiGetResourceByKey keyText = runApiGet $
     apiDbGetSingle keyText getResourceByKey
 
 apiAddResource :: BrandyActionM ()
-apiAddResource = runApiPost $
-    apiDbInsert insertResource
+apiAddResource = runApiPost $ do
+    userId <- authenticatedUserId
+    apiDbInsert $ insertResource userId
