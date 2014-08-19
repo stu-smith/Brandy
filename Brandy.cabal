@@ -44,6 +44,7 @@ executable Brandy
                        , either
                        , unordered-containers
                        , MonadCatchIO-transformers
+                       , blaze-builder
   hs-source-dirs:      src, src/Api
   ghc-options:         -O2 -funbox-strict-fields -Wall -Werror
 
@@ -83,3 +84,4 @@ Test-Suite spec
                        , either
                        , unordered-containers
                        , MonadCatchIO-transformers
+                       , blaze-builder

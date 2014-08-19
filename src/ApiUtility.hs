@@ -21,11 +21,11 @@ import Data.Aeson                  ( ToJSON, FromJSON, decode )
 import qualified Data.Text as T
                                    ( Text )
 import qualified Data.Text.Lazy as TL
-                                   ( Text )
+                                   ( Text, toStrict )
 import Database.Persist            ( Key )
 import Network.HTTP.Types.Status   ( Status, ok200, created201, noContent204
-                                   , badRequest400, notFound404, conflict409 )
-import Web.Scotty.Trans            ( json, text, status, body )
+                                   , badRequest400, unauthorized401, notFound404, conflict409 )
+import Web.Scotty.Trans            ( json, text, status, body, params )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
 import Json.WithId                 ( WithId(..), textToId )
@@ -134,6 +134,15 @@ validateDbInternal :: Status -> TL.Text -> Maybe a -> EitherT ApiError BrandyAct
 validateDbInternal s msg =
     maybe (apiFail s msg) return
 
+--
+-- This clearly isn't authentication.
+-- It's a massive security hole.
+-- WIP
+--
 authenticatedUserId :: EitherT ApiError BrandyActionM (Key DB.User)
-authenticatedUserId =
-    undefined
+authenticatedUserId = do
+    ps <- liftWeb params
+    let val = lookup "uid" ps
+    case val of
+        Nothing -> apiFail unauthorized401 "Missing uid parameter."
+        Just v  -> readKey $ TL.toStrict v

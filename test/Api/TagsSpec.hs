@@ -10,15 +10,15 @@ module Api.TagsSpec
 where
 
 import Control.Applicative        ( (<$>) )
+import Data.Monoid                ( (<>) )
 import Network.HTTP.Types.Status  ( ok200, created201, noContent204
                                   , badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
-import TestUtility                ( runTest, get, put, post, delete, jsonBody )
+import TestUtility                ( runTest, get, put, post, delete, jsonBody, uri )
 import Json.Tag                   ( Tag(..) )
 import Json.WithId                ( WithId(..), getId )
-import Uri                        ( (+/+) )
 
 
 deriving instance Show Tag
@@ -27,7 +27,7 @@ deriving instance Show a => Show (WithId a)
 spec :: Spec
 spec = do
 
-    let tagsBase = "/api/tags"
+    let tagsBase = uri ["api", "tags"]
 
     describe "get all tags" $ do
 
@@ -45,12 +45,12 @@ spec = do
 
         it "should give 404 for bad key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `get` (tagsBase +/+ "bad-key")
+                status <- simpleStatus <$> app `get` (tagsBase <> uri ["bad-key"])
                 status `shouldBe` notFound404
 
         it "should give 404 for missing key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `get` (tagsBase +/+ "123")
+                status <- simpleStatus <$> app `get` (tagsBase <> uri ["123"])
                 status `shouldBe` notFound404
 
         it "should give 200 for get tag" $
@@ -58,7 +58,7 @@ spec = do
                 let insertBody = Tag "tag-name"
                 inserted <- jsonBody <$> (app `post` tagsBase) insertBody :: IO (WithId Tag)
                 let tid = getId inserted
-                status <- simpleStatus <$> app `get` (tagsBase +/+ tid)
+                status <- simpleStatus <$> app `get` (tagsBase <> uri [tid])
                 status `shouldBe` ok200
 
     describe "add single tag" $ do
@@ -92,7 +92,7 @@ spec = do
                 inserted <- jsonBody <$> (app `post` tagsBase) insertBody :: IO (WithId Tag)
                 let uid = getId inserted
                 let updateBody = Tag ""
-                status <- simpleStatus <$> (app `put` (tagsBase +/+ uid)) updateBody
+                status <- simpleStatus <$> (app `put` (tagsBase <> uri [uid])) updateBody
                 status `shouldBe` badRequest400
 
         it "should give 200 for update tag" $
@@ -101,19 +101,19 @@ spec = do
                 inserted <- jsonBody <$> (app `post` tagsBase) insertBody :: IO (WithId Tag)
                 let uid = getId inserted
                 let updateBody = Tag "new-tag-name"
-                status <- simpleStatus <$> (app `put` (tagsBase +/+ uid)) updateBody
+                status <- simpleStatus <$> (app `put` (tagsBase <> uri [uid])) updateBody
                 status `shouldBe` ok200
 
     describe "delete single tag" $ do
 
         it "should give 204 for bad key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `delete` (tagsBase +/+ "bad-key")
+                status <- simpleStatus <$> app `delete` (tagsBase <> uri ["bad-key"])
                 status `shouldBe` noContent204
 
         it "should give 204 for missing key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `delete` (tagsBase +/+ "123")
+                status <- simpleStatus <$> app `delete` (tagsBase <> uri ["123"])
                 status `shouldBe` noContent204
 
         it "should give 204 for successful delete tag" $
@@ -121,7 +121,7 @@ spec = do
                 let insertBody = Tag "tag-name"
                 inserted <- jsonBody <$> (app `post` tagsBase) insertBody :: IO (WithId Tag)
                 let uid = getId inserted
-                status <- simpleStatus <$> app `delete` (tagsBase +/+ uid)
+                status <- simpleStatus <$> app `delete` (tagsBase <> uri [uid])
                 status `shouldBe` noContent204
 
         it "should actually delete the item" $
@@ -129,9 +129,9 @@ spec = do
                 let insertBody = Tag "tag-name"
                 inserted <- jsonBody <$> (app `post` tagsBase) insertBody :: IO (WithId Tag)
                 let uid = getId inserted
-                get1status <- simpleStatus <$> app `get` (tagsBase +/+ uid)
+                get1status <- simpleStatus <$> app `get` (tagsBase <> uri [uid])
                 get1status `shouldBe` ok200
-                status <- simpleStatus <$> app `delete` (tagsBase +/+ uid)
+                status <- simpleStatus <$> app `delete` (tagsBase <> uri [uid])
                 status `shouldBe` noContent204
-                get2status <- simpleStatus <$> app `get` (tagsBase +/+ uid)
+                get2status <- simpleStatus <$> app `get` (tagsBase <> uri [uid])
                 get2status `shouldBe` notFound404

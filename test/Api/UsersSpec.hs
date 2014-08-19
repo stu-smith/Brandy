@@ -10,6 +10,7 @@ module Api.UsersSpec
 where
 
 import Control.Applicative        ( (<$>) )
+import Data.Monoid                ( (<>) )
 import Network.HTTP.Types.Status  ( ok200, created201, noContent204
                                   , badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus )
@@ -18,8 +19,7 @@ import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy 
 import Json.PrivateUser           ( PrivateUser(..) )
 import Json.PublicUserSummary     ( PublicUserSummary(..) )
 import Json.WithId                ( WithId(..), getId )
-import Uri                        ( (+/+) )
-import TestUtility                ( runTest, get, post, put, delete, jsonBody )
+import TestUtility                ( runTest, get, post, put, delete, jsonBody, uri )
 
 
 deriving instance Show PublicUserSummary
@@ -28,7 +28,7 @@ deriving instance Show a => Show (WithId a)
 spec :: Spec
 spec = do
 
-    let usersBase = "/api/users"
+    let usersBase = uri ["api", "users"]
 
     describe "get all users" $ do
 
@@ -46,12 +46,12 @@ spec = do
 
         it "should give 404 for bad key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `get` (usersBase +/+ "bad-key")
+                status <- simpleStatus <$> app `get` (usersBase <> uri ["bad-key"])
                 status `shouldBe` notFound404
 
         it "should give 404 for missing key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `get` (usersBase +/+ "123")
+                status <- simpleStatus <$> app `get` (usersBase <> uri ["123"])
                 status `shouldBe` notFound404
 
         it "should give 200 for get user" $
@@ -59,7 +59,7 @@ spec = do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` usersBase) insertBody :: IO (WithId PrivateUser)
                 let uid = getId inserted
-                status <- simpleStatus <$> app `get` (usersBase +/+ uid)
+                status <- simpleStatus <$> app `get` (usersBase <> uri [uid])
                 status `shouldBe` ok200
 
     describe "add single user" $ do
@@ -108,7 +108,7 @@ spec = do
                 inserted <- jsonBody <$> (app `post` usersBase) insertBody :: IO (WithId PrivateUser)
                 let uid = getId inserted
                 let updateBody = PrivateUser "" "newemail@example.com"
-                status <- simpleStatus <$> (app `put` (usersBase +/+ uid)) updateBody
+                status <- simpleStatus <$> (app `put` (usersBase <> uri [uid])) updateBody
                 status `shouldBe` badRequest400
 
         it "should give 400 for missing email" $
@@ -117,7 +117,7 @@ spec = do
                 inserted <- jsonBody <$> (app `post` usersBase) insertBody :: IO (WithId PrivateUser)
                 let uid = getId inserted
                 let updateBody = PrivateUser "New Display Name" ""
-                status <- simpleStatus <$> (app `put` (usersBase +/+ uid)) updateBody
+                status <- simpleStatus <$> (app `put` (usersBase <> uri [uid])) updateBody
                 status `shouldBe` badRequest400
 
         it "should give 200 for update user" $
@@ -126,19 +126,19 @@ spec = do
                 inserted <- jsonBody <$> (app `post` usersBase) insertBody :: IO (WithId PrivateUser)
                 let uid = getId inserted
                 let updateBody = PrivateUser "New Display Name" "newemail@example.com"
-                status <- simpleStatus <$> (app `put` (usersBase +/+ uid)) updateBody
+                status <- simpleStatus <$> (app `put` (usersBase <> uri [uid])) updateBody
                 status `shouldBe` ok200
 
     describe "delete single user" $ do
 
         it "should give 204 for bad key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `delete` (usersBase +/+ "bad-key")
+                status <- simpleStatus <$> app `delete` (usersBase <> uri ["bad-key"])
                 status `shouldBe` noContent204
 
         it "should give 204 for missing key" $
             runTest $ \app -> do
-                status <- simpleStatus <$> app `delete` (usersBase +/+ "123")
+                status <- simpleStatus <$> app `delete` (usersBase <> uri ["123"])
                 status `shouldBe` noContent204
 
         it "should give 204 for successful delete user" $
@@ -146,7 +146,7 @@ spec = do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` usersBase) insertBody :: IO (WithId PrivateUser)
                 let uid = getId inserted
-                status <- simpleStatus <$> app `delete` (usersBase +/+ uid)
+                status <- simpleStatus <$> app `delete` (usersBase <> uri [uid])
                 status `shouldBe` noContent204
 
         it "should actually delete the item" $
@@ -154,9 +154,9 @@ spec = do
                 let insertBody = PrivateUser "Display Name" "email@example.com"
                 inserted <- jsonBody <$> (app `post` usersBase) insertBody :: IO (WithId PrivateUser)
                 let uid = getId inserted
-                get1status <- simpleStatus <$> app `get` (usersBase +/+ uid)
+                get1status <- simpleStatus <$> app `get` (usersBase <> uri [uid])
                 get1status `shouldBe` ok200
-                status <- simpleStatus <$> app `delete` (usersBase +/+ uid)
+                status <- simpleStatus <$> app `delete` (usersBase <> uri [uid])
                 status `shouldBe` noContent204
-                get2status <- simpleStatus <$> app `get` (usersBase +/+ uid)
+                get2status <- simpleStatus <$> app `get` (usersBase <> uri [uid])
                 get2status `shouldBe` notFound404

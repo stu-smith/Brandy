@@ -1,9 +1,14 @@
 
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeSynonymInstances #-}
 
 module TestUtility
 (
-  runTest
+  URIBuilder
+, uri
+, query
+, runTest
 , get
 , post
 , put
@@ -12,6 +17,7 @@ module TestUtility
 )
 where
 
+import Blaze.ByteString.Builder    ( toByteString )
 import Control.Monad.Trans         ( liftIO )
 import Control.Monad.Trans.Reader  ( runReaderT )
 import Data.Aeson                  ( ToJSON, FromJSON, encode, decode )
@@ -20,14 +26,16 @@ import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BSL
                                    ( toStrict )
 import qualified Data.Text as T    ( Text, pack )
-import Data.Maybe                  ( fromJust )
 import Data.Text.Encoding          ( encodeUtf8 )
+import Data.Maybe                  ( fromJust )
+import Data.Monoid                 ( Monoid(..) )
 import Database.Persist.Sql        ( runMigrationSilent )
 import Network.Wai                 ( Application, Request(..) )
 import Network.Wai.Test            ( SRequest(..), SResponse
                                    , runSession, srequest, setRawPathInfo, defaultRequest, simpleBody )
 import Network.HTTP.Types.Header   ( hAccept )
 import Network.HTTP.Types.Method   ( Method, methodGet, methodPost, methodPut, methodDelete )
+import Network.HTTP.Types.URI      ( Query, encodePath )
 import System.IO.Temp              ( withSystemTempFile )
 import Web.Scotty.Trans            ( scottyAppT )
 
@@ -36,6 +44,22 @@ import Database                    ( runSql )
 import Routing                     ( routes )
 import Schema                      ( migrate )
 
+
+data URIBuilder = URIBuilder [T.Text] Query
+
+instance Monoid URIBuilder where
+    mappend (URIBuilder p1 q1) (URIBuilder p2 q2) =
+        URIBuilder (p1 ++ p2) (q1 ++ q2)
+    mempty =
+        URIBuilder [] []
+
+uri :: [T.Text] -> URIBuilder
+uri path =
+    URIBuilder path []
+
+query :: BS.ByteString -> T.Text -> URIBuilder
+query q v =
+    URIBuilder [] [(q, Just $ encodeUtf8 v)]
 
 runTest :: (Application -> IO ()) -> IO ()
 runTest test =
@@ -48,19 +72,19 @@ runTest test =
 scottyApp :: T.Text -> BrandyScottyM () -> IO Application
 scottyApp file = scottyAppT (`runReaderT` file) (`runReaderT` file)
 
-get :: Application -> T.Text -> IO SResponse
+get :: Application -> URIBuilder -> IO SResponse
 get app path =
     actionWithoutBody (jsonRequest methodGet) app path
 
-post :: (ToJSON a) => Application -> T.Text -> a -> IO SResponse
+post :: (ToJSON a) => Application -> URIBuilder -> a -> IO SResponse
 post =
     actionWithBody $ jsonRequestWithBody methodPost
 
-put :: (ToJSON a) => Application -> T.Text -> a -> IO SResponse
+put :: (ToJSON a) => Application -> URIBuilder -> a -> IO SResponse
 put =
     actionWithBody $ jsonRequestWithBody methodPut
 
-delete :: Application -> T.Text -> IO SResponse
+delete :: Application -> URIBuilder -> IO SResponse
 delete app path =
     actionWithoutBody (jsonRequest methodDelete) app path
 
@@ -68,17 +92,17 @@ jsonBody :: FromJSON a => SResponse -> a
 jsonBody =
     fromJust . decode . simpleBody
 
-actionWithBody :: (ToJSON a) => (BS.ByteString -> Request) -> Application -> T.Text -> a -> IO SResponse
-actionWithBody request app path payload =
+actionWithBody :: (ToJSON a) => (BS.ByteString -> Request) -> Application -> URIBuilder -> a -> IO SResponse
+actionWithBody request app uriBuilder payload =
     runSession (srequest sreq) app
-  where req  = setRawPathInfo (request $ BSL.toStrict body) $ encodeUri path
+  where req  = setRawPathInfo (request $ BSL.toStrict body) $ uriToByteString uriBuilder
         sreq = SRequest req body
         body = encode payload
 
-actionWithoutBody :: Request -> Application -> T.Text -> IO SResponse
-actionWithoutBody request app path =
+actionWithoutBody :: Request -> Application -> URIBuilder -> IO SResponse
+actionWithoutBody request app uriBuilder =
     runSession (srequest sreq) app
-  where req  = setRawPathInfo request $ encodeUri path
+  where req  = setRawPathInfo request $ uriToByteString uriBuilder
         sreq = SRequest req ""
 
 jsonRequest :: Method -> Request
@@ -94,6 +118,6 @@ jsonRequestWithBody method payload =
         { requestBody = return payload
         }
 
-encodeUri :: T.Text -> BS.ByteString
-encodeUri =
-    encodeUtf8
+uriToByteString :: URIBuilder -> BS.ByteString
+uriToByteString (URIBuilder p q) =
+    toByteString $ encodePath p q
