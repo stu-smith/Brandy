@@ -11,6 +11,7 @@ where
 
 import Control.Applicative        ( (<$>) )
 import Data.Monoid                ( (<>) )
+import Data.Time.Clock            ( getCurrentTime )
 import Network.HTTP.Types.Status  ( ok200, created201, noContent204
                                   , badRequest400, notFound404, conflict409 )
 import Network.Wai.Test           ( simpleStatus )
@@ -78,6 +79,27 @@ spec = do
                 status <- simpleStatus <$> (app `post` (resourcesBase <> qUid uid)) insertBody
                 status `shouldBe` badRequest400
 
+        it "should give 400 for supplied createdByUserId" $
+            runTestWithUser $ \app uid -> do
+                let insertBody = Resource { path = "/path/to/res"
+                                          , createdByUserId = Just uid
+                                          , createdAt = Nothing
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                status <- simpleStatus <$> (app `post` (resourcesBase <> qUid uid)) insertBody
+                status `shouldBe` badRequest400
+
+        it "should give 400 for supplied createdAt" $
+            runTestWithUser $ \app uid -> do
+                now <- getCurrentTime
+                let insertBody = Resource { path = "/path/to/res"
+                                          , createdByUserId = Nothing
+                                          , createdAt = Just now
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                status <- simpleStatus <$> (app `post` (resourcesBase <> qUid uid)) insertBody
+                status `shouldBe` badRequest400
+
         it "should give 201 for add resource" $
             runTestWithUser $ \app uid -> do
                 let insertBody = Resource { path = "/path/to/res"
@@ -119,6 +141,41 @@ spec = do
                 let updateBody = Resource { path = ""
                                           , createdByUserId = Nothing
                                           , createdAt = Nothing
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                status <- simpleStatus <$> (app `put` (resourcesBase <> uri [rid])) updateBody
+                status `shouldBe` badRequest400
+
+        it "should give 400 for supplied createdByUserId" $
+            runTestWithUser $ \app uid -> do
+                let insertBody = Resource { path = "/path/to/res"
+                                          , createdByUserId = Nothing
+                                          , createdAt = Nothing
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
+                let rid = getId inserted
+                let updateBody = Resource { path = "/new/path/to/res"
+                                          , createdByUserId = Just uid
+                                          , createdAt = Nothing
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                status <- simpleStatus <$> (app `put` (resourcesBase <> uri [rid])) updateBody
+                status `shouldBe` badRequest400
+
+        it "should give 400 for supplied createdAt" $
+            runTestWithUser $ \app uid -> do
+                now <- getCurrentTime
+                let insertBody = Resource { path = "/path/to/res"
+                                          , createdByUserId = Nothing
+                                          , createdAt = Nothing
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
+                let rid = getId inserted
+                let updateBody = Resource { path = "/new/path/to/res"
+                                          , createdByUserId = Nothing
+                                          , createdAt = Just now
                                           , public = True
                                           , contentType = "x-application/any" }
                 status <- simpleStatus <$> (app `put` (resourcesBase <> uri [rid])) updateBody

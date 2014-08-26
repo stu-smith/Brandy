@@ -4,7 +4,7 @@
 module ApiUtility
 (
   Validate(..)
-, apiFail
+, apiFail, apiError
 , runApiGet, runApiPut, runApiPost, runApiDelete
 , liftDB, liftWeb
 , apiDbGetSingle, apiDbGetMultiple
@@ -39,6 +39,10 @@ apiFail :: Monad m => Status -> TL.Text -> EitherT ApiError m a
 apiFail s m =
     left $ ApiError s m
 
+apiError :: ApiError -> BrandyActionM ()
+apiError (ApiError s m) =
+    status s >> text m
+
 runApiGet :: ToJSON v => EitherT ApiError BrandyActionM v -> BrandyActionM ()
 runApiGet =
     runApi ok200
@@ -63,8 +67,8 @@ runApiInternal :: ToJSON v => (v -> BrandyActionM ()) -> EitherT ApiError Brandy
 runApiInternal respond f = do
     e <- runEitherT f
     case e of
-        Right v             -> respond v
-        Left (ApiError s m) -> status s >> text m
+        Right rv -> respond  rv
+        Left  ae -> apiError ae
 
 liftDB :: DatabaseEnvironmentT a -> EitherT ApiError BrandyActionM a
 liftDB =

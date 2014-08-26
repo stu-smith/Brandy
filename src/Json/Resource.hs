@@ -10,8 +10,8 @@ where
 
 import Control.Monad.Trans.Either  ( right )
 import Data.Aeson                  ( ToJSON, FromJSON )
-import qualified Data.Text as T
-                                   ( Text, null )
+import Data.Maybe                  ( isJust )
+import qualified Data.Text as T    ( Text, null )
 import Data.Time                   ( UTCTime )
 import GHC.Generics                ( Generic )
 import Network.HTTP.Types.Status   ( badRequest400 )
@@ -33,7 +33,9 @@ instance FromJSON Resource
 
 instance Validate Resource where
     validate resource
-        | T.null . path $ resource = wrong "Missing path."
-        | otherwise                = right resource
+        | T.null . path            $ resource = wrong "Missing path."
+        | isJust . createdByUserId $ resource = wrong "Cannot supply createdByUserId."
+        | isJust . createdAt       $ resource = wrong "Cannot supply createdAt."
+        | otherwise                           = right resource
       where
         wrong = apiFail badRequest400

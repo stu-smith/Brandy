@@ -9,12 +9,12 @@ where
 
 import Control.Applicative                   ( (<$>) )
 import Control.Monad.Trans.Reader            ( ReaderT(..), runReaderT )
-import Data.Text                             ( Text )
+import qualified Data.Text as T              ( Text )
 import System.Environment                    ( getEnv )
 import Database.Persist.Sql                  ( runMigration )
 import Network.Wai.Handler.Warp              ( Port )
 import Network.Wai.Middleware.RequestLogger  ( logStdoutDev )
-import qualified Web.Scotty.Trans as T       ( scottyT, middleware )
+import Web.Scotty.Trans                      ( scottyT, middleware )
 
 import Core                                  ( BrandyScottyM )
 import Database                              ( runSql )
@@ -28,11 +28,11 @@ main = do
     let file = "brandy.sqlite3"
     runReaderT (runSql $ runMigration migrate) file
     runScotty port file $ do
-        T.middleware logStdoutDev
+        middleware logStdoutDev
         routes
 
-runScotty :: Port -> Text -> BrandyScottyM () -> IO ()
+runScotty :: Port -> T.Text -> BrandyScottyM () -> IO ()
 runScotty port file =
-    T.scottyT port action action
+    scottyT port action action
   where
     action x = runReaderT x file

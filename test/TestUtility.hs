@@ -11,7 +11,9 @@ module TestUtility
 , runTest
 , get
 , post
+, postRaw
 , put
+, putRaw
 , delete
 , jsonBody
 )
@@ -84,9 +86,17 @@ post :: (ToJSON a) => Application -> URIBuilder -> a -> IO SResponse
 post =
     actionWithBody $ jsonRequestWithBody methodPost
 
+postRaw :: Application -> URIBuilder -> BS.ByteString -> IO SResponse
+postRaw =
+    undefined
+
 put :: (ToJSON a) => Application -> URIBuilder -> a -> IO SResponse
 put =
     actionWithBody $ jsonRequestWithBody methodPut
+
+putRaw :: Application -> URIBuilder -> BS.ByteString -> IO SResponse
+putRaw =
+    undefined
 
 delete :: Application -> URIBuilder -> IO SResponse
 delete app path =
