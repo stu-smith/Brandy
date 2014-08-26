@@ -36,7 +36,6 @@ routes = do
     post   tagCollection        apiAddTag
     delete tagElement         $ apiDeleteTag           =<< key
 
-
   where
     
     root               = "/"

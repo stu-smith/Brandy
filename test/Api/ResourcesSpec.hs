@@ -18,8 +18,8 @@ import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy 
 
 import Json.Resource              ( Resource(..) )
 import Json.WithId                ( WithId(..), getId )
-import TestUtility                ( runTest, get, put, post, delete, jsonBody, uri, query )
-import UserTestUtility            ( runTestWithUser )
+import TestUtility                ( runTest, get, put, post, delete, jsonBody, uri )
+import UserTestUtility            ( runTestWithUser, qUid )
 
 
 deriving instance Show Resource
@@ -61,7 +61,7 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                inserted <- jsonBody <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody :: IO (WithId Resource)
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 status <- simpleStatus <$> app `get` (resourcesBase <> uri [rid])
                 status `shouldBe` ok200
@@ -75,7 +75,7 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                status <- simpleStatus <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody
+                status <- simpleStatus <$> (app `post` (resourcesBase <> qUid uid)) insertBody
                 status `shouldBe` badRequest400
 
         it "should give 201 for add resource" $
@@ -85,7 +85,7 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                status <- simpleStatus <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody
+                status <- simpleStatus <$> (app `post` (resourcesBase <> qUid uid)) insertBody
                 status `shouldBe` created201
 
         it "should give 409 for duplicate path" $
@@ -95,14 +95,14 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                status1 <- simpleStatus <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody1
-                status1 `shouldBe` ok200
+                status1 <- simpleStatus <$> (app `post` (resourcesBase <> qUid uid)) insertBody1
+                status1 `shouldBe` created201
                 let insertBody2 = Resource { path = "/path/to/res"
                                           , createdByUserId = Nothing
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                status2 <- simpleStatus <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody2
+                status2 <- simpleStatus <$> (app `post` (resourcesBase <> qUid uid)) insertBody2
                 status2 `shouldBe` conflict409
 
     describe "update single resource" $ do
@@ -114,7 +114,7 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                inserted <- jsonBody <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody :: IO (WithId Resource)
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 let updateBody = Resource { path = ""
                                           , createdByUserId = Nothing
@@ -131,7 +131,7 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                inserted <- jsonBody <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody :: IO (WithId Resource)
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 let updateBody = Resource { path = "/new/path/to/res"
                                           , createdByUserId = Nothing
@@ -160,7 +160,7 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                inserted <- jsonBody <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody :: IO (WithId Resource)
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 status <- simpleStatus <$> app `delete` (resourcesBase <> uri [rid])
                 status `shouldBe` noContent204
@@ -172,7 +172,7 @@ spec = do
                                           , createdAt = Nothing
                                           , public = True
                                           , contentType = "x-application/any" }
-                inserted <- jsonBody <$> (app `post` (resourcesBase <> query "uid" uid)) insertBody :: IO (WithId Resource)
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 get1status <- simpleStatus <$> app `get` (resourcesBase <> uri [rid])
                 get1status `shouldBe` ok200

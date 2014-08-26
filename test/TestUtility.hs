@@ -32,7 +32,7 @@ import Data.Monoid                 ( Monoid(..) )
 import Database.Persist.Sql        ( runMigrationSilent )
 import Network.Wai                 ( Application, Request(..) )
 import Network.Wai.Test            ( SRequest(..), SResponse
-                                   , runSession, srequest, setRawPathInfo, defaultRequest, simpleBody )
+                                   , runSession, srequest, setPath, defaultRequest, simpleBody )
 import Network.HTTP.Types.Header   ( hAccept )
 import Network.HTTP.Types.Method   ( Method, methodGet, methodPost, methodPut, methodDelete )
 import Network.HTTP.Types.URI      ( Query, encodePath )
@@ -52,6 +52,10 @@ instance Monoid URIBuilder where
         URIBuilder (p1 ++ p2) (q1 ++ q2)
     mempty =
         URIBuilder [] []
+
+instance Show URIBuilder where
+    show (URIBuilder p q) =
+        show $ toByteString $ encodePath p q
 
 uri :: [T.Text] -> URIBuilder
 uri path =
@@ -95,14 +99,14 @@ jsonBody =
 actionWithBody :: (ToJSON a) => (BS.ByteString -> Request) -> Application -> URIBuilder -> a -> IO SResponse
 actionWithBody request app uriBuilder payload =
     runSession (srequest sreq) app
-  where req  = setRawPathInfo (request $ BSL.toStrict body) $ uriToByteString uriBuilder
+  where req  = setPath (request $ BSL.toStrict body) $ uriToByteString uriBuilder
         sreq = SRequest req body
         body = encode payload
 
 actionWithoutBody :: Request -> Application -> URIBuilder -> IO SResponse
 actionWithoutBody request app uriBuilder =
     runSession (srequest sreq) app
-  where req  = setRawPathInfo request $ uriToByteString uriBuilder
+  where req  = setPath request $ uriToByteString uriBuilder
         sreq = SRequest req ""
 
 jsonRequest :: Method -> Request
