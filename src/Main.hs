@@ -35,4 +35,4 @@ runScotty :: Port -> Text -> BrandyScottyM () -> IO ()
 runScotty port file =
     T.scottyT port action action
   where
-    action = \x -> runReaderT x file
+    action x = runReaderT x file

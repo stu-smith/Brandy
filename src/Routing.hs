@@ -11,7 +11,7 @@ import Web.Scotty.Trans  ( get, put, post, delete, html, param )
 
 import Core              ( BrandyScottyM )
 import Api.Users         ( apiGetUsers, apiGetUserByKey, apiAddUser, apiUpdateUser, apiDeleteUser )
-import Api.Resources     ( apiGetResources, apiGetResourceByKey, apiAddResource )
+import Api.Resources     ( apiGetResources, apiGetResourceByKey, apiAddResource, apiUpdateResource, apiDeleteResource )
 import Api.Tags          ( apiGetTags, apiGetTagByKey, apiAddTag, apiUpdateTag, apiDeleteTag )
 
 
@@ -28,7 +28,9 @@ routes = do
 
     get    resourceCollection   apiGetResources
     get    resourceElement    $ apiGetResourceByKey    =<< key
+    put    resourceElement    $ apiUpdateResource      =<< key
     post   resourceCollection   apiAddResource
+    delete resourceElement    $ apiDeleteResource      =<< key
 
     get    tagCollection        apiGetTags
     get    tagElement         $ apiGetTagByKey         =<< key

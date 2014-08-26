@@ -4,6 +4,8 @@ module DataAccess.Resources
   getAllResources
 , getResourceByKey
 , insertResource
+, updateResource
+, deleteResource
 )
 where
 
@@ -13,11 +15,12 @@ import qualified Data.Text as T
                                ( Text )
 import Data.Time               ( UTCTime )
 import Data.Time.Clock         ( getCurrentTime )
-import Database.Esqueleto      ( Esqueleto, Value(..), val, select, from, where_, (^.), (==.) )
+import Database.Esqueleto      ( Esqueleto, Value(..), val, select, update, from, set, where_
+                               , (^.), (==.), (=.) )
 import Database.Persist        ( Key, Entity, insert )
 
 import Core                    ( DatabaseEnvironmentT )
-import Database                ( runSql, runSqlMaybe )
+import Database                ( runSql, runSqlMaybe, standardDelete )
 import Json.Resource           ( Resource(..) )
 import Json.WithId             ( WithId(..), addId, idToText )
 import qualified Schema as DB
@@ -48,6 +51,20 @@ insertResource userId json = do
     return $ toApi db <$> maybeId
   where
     toApi db key = addId key $ dToJ db
+
+updateResource :: Key DB.Resource -> Resource -> DatabaseEnvironmentT (Maybe (WithId Resource))
+updateResource key json = do
+    runSql $ update $ \r -> do
+                 set r [ DB.ResourcePath        =. (val . path        $ json)
+                       , DB.ResourcePublic      =. (val . public      $ json)
+                       , DB.ResourceContentType =. (val . contentType $ json)
+                       ]
+                 where_ (r ^. DB.ResourceId ==. val key)
+    getResourceByKey key
+
+deleteResource :: Key DB.Resource -> DatabaseEnvironmentT ()
+deleteResource =
+    standardDelete
 
 dvToJ :: ( Value (Key DB.Resource)
          , Value T.Text
