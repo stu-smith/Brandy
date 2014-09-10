@@ -4,11 +4,11 @@
 
 module DataAccess.Users
 (
-  getAllUsers
-, getUserByKey
-, insertUser
-, updateUser
-, deleteUser
+  dbGetAllUsers
+, dbGetUser
+, dbInsertUser
+, dbUpdateUser
+, dbDeleteUser
 )
 where
 
@@ -24,8 +24,8 @@ import Json.WithId                                  ( WithId(..), addId )
 import qualified Schema as DB
 
 
-getAllUsers :: DatabaseEnvironmentT [WithId PublicUserSummary]
-getAllUsers =
+dbGetAllUsers :: DatabaseEnvironmentT [WithId PublicUserSummary]
+dbGetAllUsers =
     runSql $ do
         users <- select $ from $ \u ->
                  return (u ^. DB.UserId, u ^. DB.UserDisplayName)
@@ -34,18 +34,18 @@ getAllUsers =
     dToJ (Value uId, Value uDisplayName) =
         addId uId $ PublicUserSummary uDisplayName
 
-getUserByKey :: Key DB.User -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-getUserByKey =
+dbGetUser :: Key DB.User -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+dbGetUser =
     standardGetByKey privateUserMapping
 
-insertUser :: PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-insertUser =
+dbInsertUser :: PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+dbInsertUser =
     standardInsert privateUserMapping
 
-updateUser :: Key DB.User -> PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
-updateUser =
+dbUpdateUser :: Key DB.User -> PrivateUser -> DatabaseEnvironmentT (Maybe (WithId PrivateUser))
+dbUpdateUser =
     standardUpdate privateUserMapping
 
-deleteUser :: Key DB.User -> DatabaseEnvironmentT ()
-deleteUser =
+dbDeleteUser :: Key DB.User -> DatabaseEnvironmentT ()
+dbDeleteUser =
     standardDelete

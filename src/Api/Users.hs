@@ -2,7 +2,7 @@
 module Api.Users
 (
   apiGetUsers
-, apiGetUserByKey
+, apiGetUser
 , apiAddUser
 , apiUpdateUser
 , apiDeleteUser
@@ -15,25 +15,25 @@ import qualified Data.Text as T
 import ApiUtility        ( runApiGet, runApiPut, runApiPost, runApiDelete
                          , apiDbGetSingle, apiDbGetMultiple, apiDbInsert, apiDbUpdate, apiDbDelete )
 import Core              ( BrandyActionM )
-import DataAccess.Users  ( getAllUsers, getUserByKey, insertUser, updateUser, deleteUser )
+import DataAccess.Users  ( dbGetAllUsers, dbGetUser, dbInsertUser, dbUpdateUser, dbDeleteUser )
 
 
 apiGetUsers :: BrandyActionM ()
 apiGetUsers = runApiGet $
-    apiDbGetMultiple getAllUsers
+    apiDbGetMultiple dbGetAllUsers
 
-apiGetUserByKey :: T.Text -> BrandyActionM ()
-apiGetUserByKey keyText = runApiGet $
-    apiDbGetSingle keyText getUserByKey
+apiGetUser :: T.Text -> BrandyActionM ()
+apiGetUser keyText = runApiGet $
+    apiDbGetSingle keyText dbGetUser
 
 apiAddUser :: BrandyActionM ()
 apiAddUser = runApiPost $
-    apiDbInsert insertUser
+    apiDbInsert dbInsertUser
 
 apiUpdateUser :: T.Text -> BrandyActionM ()
 apiUpdateUser keyText = runApiPut $
-    apiDbUpdate keyText updateUser
+    apiDbUpdate keyText dbUpdateUser
 
 apiDeleteUser :: T.Text -> BrandyActionM ()
 apiDeleteUser keyText = runApiDelete $
-    apiDbDelete keyText deleteUser
+    apiDbDelete keyText dbDeleteUser

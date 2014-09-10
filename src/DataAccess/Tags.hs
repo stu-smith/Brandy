@@ -1,11 +1,11 @@
 
 module DataAccess.Tags
 (
-  getAllTags
-, getTagByKey
-, insertTag
-, updateTag
-, deleteTag
+  dbGetAllTags
+, dbGetTag
+, dbInsertTag
+, dbUpdateTag
+, dbDeleteTag
 )
 where
 
@@ -17,22 +17,22 @@ import Json.Tag          ( Tag, tagMapping )
 import Json.WithId       ( WithId(..) )
 import qualified Schema as DB
 
-getAllTags :: DatabaseEnvironmentT [WithId Tag]
-getAllTags =
+dbGetAllTags :: DatabaseEnvironmentT [WithId Tag]
+dbGetAllTags =
     standardGetAll tagMapping
 
-getTagByKey :: Key DB.Tag -> DatabaseEnvironmentT (Maybe (WithId Tag))
-getTagByKey =
+dbGetTag :: Key DB.Tag -> DatabaseEnvironmentT (Maybe (WithId Tag))
+dbGetTag =
     standardGetByKey tagMapping
 
-insertTag :: Tag -> DatabaseEnvironmentT (Maybe (WithId Tag))
-insertTag =
+dbInsertTag :: Tag -> DatabaseEnvironmentT (Maybe (WithId Tag))
+dbInsertTag =
     standardInsert tagMapping
 
-updateTag :: Key DB.Tag -> Tag -> DatabaseEnvironmentT (Maybe (WithId Tag))
-updateTag =
+dbUpdateTag :: Key DB.Tag -> Tag -> DatabaseEnvironmentT (Maybe (WithId Tag))
+dbUpdateTag =
     standardUpdate tagMapping
 
-deleteTag :: Key DB.Tag -> DatabaseEnvironmentT ()
-deleteTag =
+dbDeleteTag :: Key DB.Tag -> DatabaseEnvironmentT ()
+dbDeleteTag =
     standardDelete

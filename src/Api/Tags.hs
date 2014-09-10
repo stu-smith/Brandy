@@ -2,7 +2,7 @@
 module Api.Tags
 (
   apiGetTags
-, apiGetTagByKey
+, apiGetTag
 , apiAddTag
 , apiUpdateTag
 , apiDeleteTag
@@ -15,25 +15,25 @@ import qualified Data.Text as T
 import ApiUtility       ( runApiGet, runApiPut, runApiPost, runApiDelete
                         , apiDbGetMultiple, apiDbGetSingle, apiDbInsert, apiDbUpdate, apiDbDelete )
 import Core             ( BrandyActionM )
-import DataAccess.Tags  ( getAllTags, getTagByKey, insertTag, updateTag, deleteTag )
+import DataAccess.Tags  ( dbGetAllTags, dbGetTag, dbInsertTag, dbUpdateTag, dbDeleteTag )
 
 
 apiGetTags :: BrandyActionM ()
 apiGetTags = runApiGet $
-    apiDbGetMultiple getAllTags
+    apiDbGetMultiple dbGetAllTags
 
-apiGetTagByKey :: T.Text -> BrandyActionM ()
-apiGetTagByKey keyText = runApiGet $
-    apiDbGetSingle keyText getTagByKey
+apiGetTag :: T.Text -> BrandyActionM ()
+apiGetTag keyText = runApiGet $
+    apiDbGetSingle keyText dbGetTag
 
 apiAddTag :: BrandyActionM ()
 apiAddTag = runApiPost $
-    apiDbInsert insertTag
+    apiDbInsert dbInsertTag
 
 apiUpdateTag :: T.Text -> BrandyActionM ()
 apiUpdateTag keyText = runApiPut $
-    apiDbUpdate keyText updateTag
+    apiDbUpdate keyText dbUpdateTag
 
 apiDeleteTag :: T.Text -> BrandyActionM ()
 apiDeleteTag keyText = runApiDelete $
-    apiDbDelete keyText deleteTag
+    apiDbDelete keyText dbDeleteTag

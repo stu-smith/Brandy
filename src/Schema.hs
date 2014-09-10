@@ -1,16 +1,14 @@
 
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE GADTs, TypeFamilies                 #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes        #-}
+{-# LANGUAGE OverloadedStrings                   #-}
 
 module Schema
 where
 
+import qualified Data.ByteString as BS
+                            ( ByteString )
 import qualified Data.Text as T
                             ( Text )
 import Data.Time            ( UTCTime )
@@ -20,24 +18,22 @@ import Database.Persist.TH  ( share, mkPersist, sqlOnlySettings, mkMigrate, pers
 share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
 
     User
-        email        T.Text
-        displayName  T.Text
-        UniqueUserEmail        email
-        UniqueUserDisplayName  displayName
-      deriving Show Read Eq Ord
+        email           T.Text
+        displayName     T.Text
+        UniqueUserEmail             email
+        UniqueUserDisplayName       displayName
 
     Tag
-        name         T.Text
-        UniqueTagName           name
-      deriving Show Read Eq Ord
+        name            T.Text
+        UniqueTagName               name
 
-    Resource json
-        path         T.Text
-        createdBy    UserId
-        createdAt    UTCTime
-        public       Bool
-        contentType  T.Text
-        UniqueResourcePath      path
-      deriving Show Read Eq Ord
+    Resource
+        path            T.Text
+        createdBy       UserId
+        createdAt       UTCTime
+        public          Bool
+        contentType     T.Text
+        data            BS.ByteString
+        UniqueResourcePath          path
 
 |]

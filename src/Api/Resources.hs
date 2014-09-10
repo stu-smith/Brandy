@@ -2,7 +2,7 @@
 module Api.Resources
 (
   apiGetResources
-, apiGetResourceByKey
+, apiGetResource
 , apiAddResource
 , apiUpdateResource
 , apiDeleteResource
@@ -16,25 +16,25 @@ import ApiUtility            ( runApiGet, runApiPost, runApiPut, runApiDelete
                              , apiDbGetMultiple, apiDbGetSingle, apiDbInsert, apiDbUpdate, apiDbDelete
                              , authenticatedUserId )
 import Core                  ( BrandyActionM )
-import DataAccess.Resources  ( getAllResources, getResourceByKey, insertResource, updateResource, deleteResource )
+import DataAccess.Resources  ( dbGetAllResources, dbGetResource, dbInsertResource, dbUpdateResource, dbDeleteResource )
 
 apiGetResources :: BrandyActionM ()
 apiGetResources = runApiGet $
-    apiDbGetMultiple getAllResources
+    apiDbGetMultiple dbGetAllResources
 
-apiGetResourceByKey :: T.Text -> BrandyActionM ()
-apiGetResourceByKey keyText = runApiGet $
-    apiDbGetSingle keyText getResourceByKey
+apiGetResource :: T.Text -> BrandyActionM ()
+apiGetResource keyText = runApiGet $
+    apiDbGetSingle keyText dbGetResource
 
 apiAddResource :: BrandyActionM ()
 apiAddResource = runApiPost $ do
     userId <- authenticatedUserId
-    apiDbInsert $ insertResource userId
+    apiDbInsert $ dbInsertResource userId
 
 apiUpdateResource :: T.Text -> BrandyActionM ()
 apiUpdateResource keyText = runApiPut $
-    apiDbUpdate keyText updateResource
+    apiDbUpdate keyText dbUpdateResource
 
 apiDeleteResource :: T.Text -> BrandyActionM ()
 apiDeleteResource keyText = runApiDelete $
-    apiDbDelete keyText deleteResource
+    apiDbDelete keyText dbDeleteResource

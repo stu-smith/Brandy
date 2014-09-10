@@ -4,12 +4,14 @@
 module ApiUtility
 (
   Validate(..)
+, RawResponse(..)
 , apiFail, apiError
-, runApiGet, runApiPut, runApiPost, runApiDelete
+, runApiGet, runApiPut, runApiPost, runApiDelete, runApiRaw
 , liftDB, liftWeb
 , apiDbGetSingle, apiDbGetMultiple
 , apiDbInsert, apiDbUpdate, apiDbDelete
 , authenticatedUserId
+, readKey, validateDbExists
 )
 where
 
@@ -18,19 +20,25 @@ import Control.Monad               ( void )
 import Control.Monad.Trans         ( lift )
 import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
 import Data.Aeson                  ( ToJSON, FromJSON, decode )
-import qualified Data.Text as T
-                                   ( Text )
+import qualified Data.ByteString.Lazy as BSL
+                                   ( ByteString )
+import qualified Data.Text as T    ( Text )
 import qualified Data.Text.Lazy as TL
                                    ( Text, toStrict )
 import Database.Persist            ( Key )
 import Network.HTTP.Types.Status   ( Status, ok200, created201, noContent204
                                    , badRequest400, unauthorized401, notFound404, conflict409 )
-import Web.Scotty.Trans            ( json, text, status, body, params )
+import Web.Scotty.Trans            ( json, text, status, body, params, raw, setHeader )
 
 import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
 import Json.WithId                 ( WithId(..), textToId )
 import qualified Schema as DB
 
+
+data RawResponse = RawResponse
+    { contentType :: Maybe TL.Text
+    , bodyValue   :: BSL.ByteString
+    }
 
 class Validate a where
     validate :: Monad m => a -> EitherT ApiError m a
@@ -63,7 +71,21 @@ runApi :: ToJSON v => Status -> EitherT ApiError BrandyActionM v -> BrandyAction
 runApi s =
     runApiInternal (\v -> status s >> json v)
 
-runApiInternal :: ToJSON v => (v -> BrandyActionM ()) -> EitherT ApiError BrandyActionM v -> BrandyActionM ()
+runApiRaw :: Status -> EitherT ApiError BrandyActionM RawResponse -> BrandyActionM ()
+runApiRaw s getRawResponse = do
+    rr <- runEitherT getRawResponse
+    case rr of
+        Right (RawResponse ct bv) -> send ct bv
+        Left  ae                  -> apiError ae
+  where
+    send mct bv = do
+        status s
+        case mct of
+            Just ct -> setHeader "Content-Type" ct
+            Nothing -> return ()
+        raw bv
+
+runApiInternal :: (v -> BrandyActionM ()) -> EitherT ApiError BrandyActionM v -> BrandyActionM ()
 runApiInternal respond f = do
     e <- runEitherT f
     case e of
