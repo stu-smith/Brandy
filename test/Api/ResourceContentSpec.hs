@@ -12,13 +12,15 @@ import qualified Data.ByteString as BS
                                   ( empty )
 import qualified Data.ByteString.Lazy as BSL
                                   ( null )
+import Data.List                  ( find )
+import Data.Maybe                 ( fromJust )
 import Data.Monoid                ( (<>) )
-import Network.HTTP.Types.Status  ( ok200, notFound404, methodNotAllowed405 )
-import Network.Wai.Test           ( simpleStatus, simpleBody )
+import Network.HTTP.Types.Status  ( ok200, noContent204, notFound404, methodNotAllowed405 )
+import Network.Wai.Test           ( simpleStatus, simpleBody, simpleHeaders )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
 import Json.Resource              ( Resource(..) )
-import Json.WithId                ( WithId(..), getId )
+import Json.WithId                ( WithId, getId )
 import TestUtility                ( runTest, get, putRaw, post, postRaw, delete, uri, jsonBody )
 import UserTestUtility            ( runTestWithUser, qUid )
 
@@ -59,6 +61,32 @@ spec = do
                 body <- simpleBody <$> app `get` (resourcesBase <> uri [rid, "content"])
                 body `shouldSatisfy` BSL.null
 
+        it "should give correct content-type" $
+            runTestWithUser $ \app uid -> do
+                let insertBody = Resource { path = "/path/to/res"
+                                          , createdByUserId = Nothing
+                                          , createdAt = Nothing
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
+                let rid = getId inserted
+                headers <- simpleHeaders <$> app `get` (resourcesBase <> uri [rid, "content"])
+                let ct = fromJust (find (\x -> (fst x == "content-type")) headers)
+                snd ct `shouldBe` "x-application/any"
+
+        it "should give correct body" $
+            runTestWithUser $ \app uid -> do
+                let insertBody = Resource { path = "/path/to/res"
+                                          , createdByUserId = Nothing
+                                          , createdAt = Nothing
+                                          , public = True
+                                          , contentType = "x-application/any" }
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
+                let rid = getId inserted
+                _ <- id <$> (app `putRaw` (resourcesBase <> uri [rid, "content"])) "Hello world"
+                body <- simpleBody <$> app `get` (resourcesBase <> uri [rid, "content"])
+                body `shouldBe` "Hello world"
+
     describe "post resource content" $ do
 
         it "should give 405" $
@@ -94,7 +122,7 @@ spec = do
                 status <- simpleStatus <$> (app `putRaw` (resourcesBase <> uri ["bad-key", "content"])) BS.empty
                 status `shouldBe` notFound404
 
-        it "should give 200 for valid key" $
+        it "should give 204 for valid key" $
             runTestWithUser $ \app uid -> do
                 let insertBody = Resource { path = "/path/to/res"
                                           , createdByUserId = Nothing
@@ -104,4 +132,4 @@ spec = do
                 inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 status <- simpleStatus <$> (app `putRaw` (resourcesBase <> uri [rid, "content"])) BS.empty
-                status `shouldBe` ok200
+                status `shouldBe` noContent204
