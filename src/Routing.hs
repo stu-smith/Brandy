@@ -7,22 +7,31 @@ module Routing
 )
 where
 
+import qualified Data.Text as T   ( append, intercalate )
+import qualified Data.Text.Lazy as TL
+                                  ( Text, fromStrict )
 import Network.HTTP.Types.Status  ( methodNotAllowed405 )
-import Web.Scotty.Trans           ( get, put, post, delete, html, param )
+import Network.Wai                ( pathInfo )
+import Web.Scotty.Trans           ( ScottyT, get, put, post, delete, param, function )
 
-import Core                       ( BrandyScottyM, ApiError(..) )
+import Core                       ( BrandyScottyM, DatabaseEnvironmentT, ApiError(..) )
 import Api.Users                  ( apiGetUsers, apiGetUser, apiAddUser, apiUpdateUser, apiDeleteUser )
 import Api.Resources              ( apiGetResources, apiGetResource
                                   , apiAddResource, apiUpdateResource, apiDeleteResource )
 import Api.ResourceContent        ( apiGetResourceContent, apiUpdateResourceContent )
 import Api.Tags                   ( apiGetTags, apiGetTag, apiAddTag, apiUpdateTag, apiDeleteTag )
 import ApiUtility                 ( apiError )
+import Transforms.Resource        ( handleResource )
 
 
 routes :: BrandyScottyM ()
 routes = do
+    apiRoutes
+    resourceRoutes
 
-    get     root                   $ html "ROOT"
+
+apiRoutes :: ScottyT TL.Text DatabaseEnvironmentT ()
+apiRoutes = do
 
     get     userCollection           apiGetUsers
     get     userElement            $ apiGetUser                 =<< key
@@ -48,8 +57,9 @@ routes = do
     delete  tagElement             $ apiDeleteTag               =<< key
 
   where
-    
-    root                   = "/"
+
+    apiNotAllowed          = apiError $ ApiError methodNotAllowed405 "Not allowed."
+
     userCollection         = "/api/users"
     userElement            = "/api/users/:key"
     resourceCollection     = "/api/resources"
@@ -60,4 +70,11 @@ routes = do
 
     key                    = param "key"
 
-    apiNotAllowed          = apiError $ ApiError methodNotAllowed405 "Not allowed."
+
+resourceRoutes :: ScottyT TL.Text DatabaseEnvironmentT ()
+resourceRoutes =
+    get (function getEntire) $ handleResource =<< entire
+  where
+    entireKey = "__entire"
+    entire = param entireKey
+    getEntire req = Just [(entireKey, TL.fromStrict ("/" `T.append` T.intercalate "/" $ pathInfo req))]

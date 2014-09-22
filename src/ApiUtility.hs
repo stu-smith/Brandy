@@ -17,7 +17,6 @@ where
 
 import Control.Applicative         ( (<$>) )
 import Control.Monad               ( void )
-import Control.Monad.Trans         ( lift )
 import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
 import Data.Aeson                  ( ToJSON, FromJSON, decode )
 import qualified Data.ByteString.Lazy as BSL
@@ -30,7 +29,7 @@ import Network.HTTP.Types.Status   ( Status, ok200, created201, noContent204
                                    , badRequest400, unauthorized401, notFound404, conflict409 )
 import Web.Scotty.Trans            ( json, text, status, body, params, raw, setHeader )
 
-import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
+import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT, liftWeb, liftDB )  
 import Json.WithId                 ( WithId(..), textToId )
 import qualified Schema as DB
 
@@ -91,14 +90,6 @@ runApiInternal respond f = do
     case e of
         Right rv -> respond  rv
         Left  ae -> apiError ae
-
-liftDB :: DatabaseEnvironmentT a -> EitherT ApiError BrandyActionM a
-liftDB =
-    lift . lift
-
-liftWeb :: BrandyActionM a -> EitherT ApiError BrandyActionM a
-liftWeb =
-    lift
 
 validateBody :: (FromJSON a, Validate a) => EitherT ApiError BrandyActionM a
 validateBody =

@@ -3,6 +3,7 @@ module DataAccess.Resources
 (
   dbGetAllResources
 , dbGetResource
+, dbGetResourceByPath
 , dbInsertResource
 , dbUpdateResource
 , dbDeleteResource
@@ -41,10 +42,15 @@ dbGetResource key =
         resource <- select $ from $ \r -> do
                     where_ (r ^. DB.ResourceId ==. val key)
                     return $ columnsWithoutContent r
-        case resource of
-            []     -> return Nothing
-            (r:[]) -> return $ Just $ dvToJ r
-            _      -> undefined 
+        expectSingleRow resource
+
+dbGetResourceByPath :: T.Text -> DatabaseEnvironmentT (Maybe (WithId Resource))
+dbGetResourceByPath p =
+    runSql $ do
+        resource <- select $ from $ \r -> do
+                    where_ (r ^. DB.ResourcePath ==. val p)
+                    return $ columnsWithoutContent r
+        expectSingleRow resource
 
 dbInsertResource :: Key DB.User -> Resource -> DatabaseEnvironmentT (Maybe (WithId Resource))
 dbInsertResource userId json = do
@@ -114,3 +120,20 @@ columnsWithoutContent r =
     , r ^. DB.ResourcePublic
     , r ^. DB.ResourceContentType
     )
+
+expectSingleRow :: Monad m
+                => [
+                      ( Value (Key DB.Resource)
+                      , Value T.Text
+                      , Value (Key DB.User)
+                      , Value UTCTime
+                      , Value Bool
+                      , Value T.Text
+                      )
+                   ]
+                -> m (Maybe (WithId Resource))
+expectSingleRow resource =
+    case resource of
+      []     -> return Nothing
+      (r:[]) -> return $ Just $ dvToJ r
+      _      -> undefined 
