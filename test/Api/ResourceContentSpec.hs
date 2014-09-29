@@ -12,16 +12,14 @@ import qualified Data.ByteString as BS
                                   ( empty )
 import qualified Data.ByteString.Lazy as BSL
                                   ( null )
-import Data.List                  ( find )
-import Data.Maybe                 ( fromJust )
 import Data.Monoid                ( (<>) )
 import Network.HTTP.Types.Status  ( ok200, noContent204, notFound404, methodNotAllowed405 )
-import Network.Wai.Test           ( simpleStatus, simpleBody, simpleHeaders )
+import Network.Wai.Test           ( simpleStatus, simpleBody )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
 import Json.Resource              ( Resource(..) )
 import Json.WithId                ( WithId, getId )
-import TestUtility                ( runTest, get, putRaw, post, postRaw, delete, uri, jsonBody )
+import TestUtility                ( runTest, get, putRaw, post, postRaw, delete, uri, jsonBody, simpleHeader )
 import UserTestUtility            ( runTestWithUser, qUid )
 
 
@@ -70,9 +68,8 @@ spec = do
                                           , contentType = "x-application/any" }
                 inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
-                headers <- simpleHeaders <$> app `get` (resourcesBase <> uri [rid, "content"])
-                let ct = fromJust (find (\x -> (fst x == "content-type")) headers)
-                snd ct `shouldBe` "x-application/any"
+                ct <- simpleHeader "content-type" <$> (app `get` (resourcesBase <> uri [rid, "content"]))
+                ct `shouldBe` "x-application/any"
 
         it "should give correct body" $
             runTestWithUser $ \app uid -> do

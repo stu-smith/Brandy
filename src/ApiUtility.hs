@@ -17,6 +17,7 @@ where
 
 import Control.Applicative         ( (<$>) )
 import Control.Monad               ( void )
+import Control.Monad.Trans         ( MonadTrans, lift )
 import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
 import Data.Aeson                  ( ToJSON, FromJSON, decode )
 import qualified Data.ByteString.Lazy as BSL
@@ -29,8 +30,8 @@ import Network.HTTP.Types.Status   ( Status, ok200, created201, noContent204
                                    , badRequest400, unauthorized401, notFound404, conflict409 )
 import Web.Scotty.Trans            ( json, text, status, body, params, raw, setHeader )
 
-import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT, liftWeb, liftDB )  
-import Json.WithId                 ( WithId(..), textToId )
+import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
+import Json.WithId                 ( WithId, textToId )
 import qualified Schema as DB
 
 
@@ -150,6 +151,14 @@ validateDbInsert =
 validateDbInternal :: Status -> TL.Text -> Maybe a -> EitherT ApiError BrandyActionM a
 validateDbInternal s msg =
     maybe (apiFail s msg) return
+
+liftDB :: MonadTrans mt => DatabaseEnvironmentT a -> mt BrandyActionM a
+liftDB =
+    lift . lift
+
+liftWeb :: MonadTrans mt => BrandyActionM a -> mt BrandyActionM a
+liftWeb =
+    lift
 
 --
 -- This clearly isn't authentication.

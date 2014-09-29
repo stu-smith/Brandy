@@ -10,6 +10,7 @@ module Api.ResourcesSpec
 where
 
 import Control.Applicative        ( (<$>) )
+import Data.Aeson                 ( FromJSON, ToJSON, toJSON )
 import Data.Monoid                ( (<>) )
 import Data.Time.Clock            ( getCurrentTime )
 import Network.HTTP.Types.Status  ( ok200, created201, noContent204
@@ -18,13 +19,19 @@ import Network.Wai.Test           ( simpleStatus )
 import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy )
 
 import Json.Resource              ( Resource(..) )
-import Json.WithId                ( WithId(..), getId )
+import Json.WithId                ( WithId, getId )
 import TestUtility                ( runTest, get, put, post, delete, jsonBody, uri )
 import UserTestUtility            ( runTestWithUser, qUid )
 
 
 deriving instance Show Resource
-deriving instance Show a => Show (WithId a)
+
+instance (ToJSON j, FromJSON j) => Show (WithId j) where
+    show = show . toJSON
+
+instance (Eq j, ToJSON j, FromJSON j) => Eq (WithId j) where
+    x == y = (show $ toJSON x) == (show $ toJSON y)
+
 
 spec :: Spec
 spec = do

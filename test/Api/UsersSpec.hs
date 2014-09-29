@@ -10,6 +10,7 @@ module Api.UsersSpec
 where
 
 import Control.Applicative        ( (<$>) )
+import Data.Aeson                 ( FromJSON, ToJSON, toJSON )
 import Data.Monoid                ( (<>) )
 import Network.HTTP.Types.Status  ( ok200, created201, noContent204
                                   , badRequest400, notFound404, conflict409 )
@@ -18,12 +19,18 @@ import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy 
 
 import Json.PrivateUser           ( PrivateUser(..) )
 import Json.PublicUserSummary     ( PublicUserSummary(..) )
-import Json.WithId                ( WithId(..), getId )
+import Json.WithId                ( WithId, getId )
 import TestUtility                ( runTest, get, post, put, delete, jsonBody, uri )
 
 
 deriving instance Show PublicUserSummary
-deriving instance Show a => Show (WithId a)
+
+instance (ToJSON j, FromJSON j) => Show (WithId j) where
+    show = show . toJSON
+
+instance (Eq j, ToJSON j, FromJSON j) => Eq (WithId j) where
+    x == y = (show $ toJSON x) == (show $ toJSON y)
+
 
 spec :: Spec
 spec = do

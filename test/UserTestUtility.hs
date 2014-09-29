@@ -14,7 +14,7 @@ import qualified Data.Text as T
 import Network.Wai          ( Application )
 
 import Json.PrivateUser     ( PrivateUser(..) )
-import Json.WithId          ( WithId(..), getId )
+import Json.WithId          ( WithId, getId )
 import TestUtility          ( URIBuilder, runTest, post, jsonBody, uri, query )
 
 

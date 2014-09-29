@@ -16,6 +16,7 @@ module TestUtility
 , putRaw
 , delete
 , jsonBody
+, simpleHeader
 )
 where
 
@@ -27,6 +28,7 @@ import qualified Data.ByteString as BS
                                    ( ByteString )
 import qualified Data.ByteString.Lazy as BSL
                                    ( ByteString, toStrict, fromStrict )
+import Data.List                   ( find )
 import qualified Data.Text as T    ( Text, pack )
 import Data.Text.Encoding          ( encodeUtf8 )
 import Data.Maybe                  ( fromJust )
@@ -34,8 +36,8 @@ import Data.Monoid                 ( Monoid(..) )
 import Database.Persist.Sql        ( runMigrationSilent )
 import Network.Wai                 ( Application, Request(..) )
 import Network.Wai.Test            ( SRequest(..), SResponse
-                                   , runSession, srequest, setPath, defaultRequest, simpleBody )
-import Network.HTTP.Types.Header   ( hAccept )
+                                   , runSession, srequest, setPath, defaultRequest, simpleBody, simpleHeaders )
+import Network.HTTP.Types.Header   ( HeaderName, hAccept )
 import Network.HTTP.Types.Method   ( Method, methodGet, methodPost, methodPut, methodDelete )
 import Network.HTTP.Types.URI      ( Query, encodePath )
 import System.IO.Temp              ( withSystemTempFile )
@@ -141,3 +143,7 @@ defaultRequestWithBody method payload =
 uriToByteString :: URIBuilder -> BS.ByteString
 uriToByteString (URIBuilder p q) =
     toByteString $ encodePath p q
+
+simpleHeader :: HeaderName -> SResponse -> BS.ByteString
+simpleHeader name =
+    snd . fromJust . find (\x -> (fst x == name)) . simpleHeaders

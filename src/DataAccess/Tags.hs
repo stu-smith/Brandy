@@ -14,7 +14,7 @@ import Database.Persist  ( Key )
 import Core              ( DatabaseEnvironmentT )
 import Database          ( standardGetAll, standardGetByKey, standardInsert, standardUpdate, standardDelete )
 import Json.Tag          ( Tag, tagMapping )
-import Json.WithId       ( WithId(..) )
+import Json.WithId       ( WithId )
 import qualified Schema as DB
 
 dbGetAllTags :: DatabaseEnvironmentT [WithId Tag]

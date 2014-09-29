@@ -10,6 +10,7 @@ module Api.TagsSpec
 where
 
 import Control.Applicative        ( (<$>) )
+import Data.Aeson                 ( FromJSON, ToJSON, toJSON )
 import Data.Monoid                ( (<>) )
 import Network.HTTP.Types.Status  ( ok200, created201, noContent204
                                   , badRequest400, notFound404, conflict409 )
@@ -18,11 +19,17 @@ import Test.Hspec                 ( Spec, describe, it, shouldBe, shouldSatisfy 
 
 import TestUtility                ( runTest, get, put, post, delete, jsonBody, uri )
 import Json.Tag                   ( Tag(..) )
-import Json.WithId                ( WithId(..), getId )
+import Json.WithId                ( WithId, getId )
 
 
 deriving instance Show Tag
-deriving instance Show a => Show (WithId a)
+
+instance (ToJSON j, FromJSON j) => Show (WithId j) where
+    show = show . toJSON
+
+instance (Eq j, ToJSON j, FromJSON j) => Eq (WithId j) where
+    x == y = (show $ toJSON x) == (show $ toJSON y)
+
 
 spec :: Spec
 spec = do

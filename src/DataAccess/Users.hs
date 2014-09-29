@@ -20,7 +20,7 @@ import Database                                     ( runSql
                                                     , standardGetByKey, standardInsert, standardUpdate, standardDelete )
 import Json.PublicUserSummary as PublicUserSummary  ( PublicUserSummary(..) )
 import Json.PrivateUser as PrivateUser              ( PrivateUser(..), privateUserMapping )
-import Json.WithId                                  ( WithId(..), addId )
+import Json.WithId                                  ( WithId, addId )
 import qualified Schema as DB
 
 

@@ -11,11 +11,11 @@ import Control.Applicative        ( (<$>) )
 import Data.Monoid                ( (<>) )
 import Test.Hspec                 ( Spec, describe, it, shouldBe )
 import Network.HTTP.Types.Status  ( ok200, notFound404 )
-import Network.Wai.Test           ( simpleStatus )
+import Network.Wai.Test           ( simpleStatus, simpleBody )
 
 import Json.Resource              ( Resource(..) )
 import Json.WithId                ( WithId, getId )
-import TestUtility                ( runTest, get, putRaw, post, uri, jsonBody )
+import TestUtility                ( runTest, get, putRaw, post, uri, jsonBody, simpleHeader )
 import UserTestUtility            ( runTestWithUser, qUid )
 
 
@@ -33,13 +33,29 @@ spec = do
 
         it "should give 200 for found resource" $
             runTestWithUser $ \app uid -> do
-                let insertBody = Resource { path = "/foo/bar"
+                let insertBody = Resource { path            = "/foo/bar"
                                           , createdByUserId = Nothing
-                                          , createdAt = Nothing
-                                          , public = True
-                                          , contentType = "text/plain" }
+                                          , createdAt       = Nothing
+                                          , public          = True
+                                          , contentType     = "text/plain" }
                 inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
                 let rid = getId inserted
                 _ <- id <$> (app `putRaw` (resourcesBase <> uri [rid, "content"])) "Hello world"
                 status <- simpleStatus <$> app `get` uri ["foo", "bar"]
                 status `shouldBe` ok200
+
+        it "should give the correct body and content type for found resource" $
+            runTestWithUser $ \app uid -> do
+                let insertBody = Resource { path            = "/foo/bar"
+                                          , createdByUserId = Nothing
+                                          , createdAt       = Nothing
+                                          , public          = True
+                                          , contentType     = "text/plain" }
+                inserted <- jsonBody <$> (app `post` (resourcesBase <> qUid uid)) insertBody :: IO (WithId Resource)
+                let rid = getId inserted
+                _ <- id <$> (app `putRaw` (resourcesBase <> uri [rid, "content"])) "Hello world"
+                let getReq = app `get` uri ["foo", "bar"]
+                body <- simpleBody <$> getReq
+                body `shouldBe` "Hello world"
+                ct <- simpleHeader "content-type" <$> getReq
+                ct `shouldBe` "text/plain"

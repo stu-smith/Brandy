@@ -75,6 +75,6 @@ resourceRoutes :: ScottyT TL.Text DatabaseEnvironmentT ()
 resourceRoutes =
     get (function getEntire) $ handleResource =<< entire
   where
-    entireKey = "__entire"
-    entire = param entireKey
-    getEntire req = Just [(entireKey, TL.fromStrict ("/" `T.append` T.intercalate "/" $ pathInfo req))]
+    entireKey     = "__entire"
+    entire        = param entireKey
+    getEntire req = Just [(entireKey, TL.fromStrict ("/" `T.append` T.intercalate "/" (pathInfo req)))]

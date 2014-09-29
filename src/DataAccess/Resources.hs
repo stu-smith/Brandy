@@ -25,7 +25,7 @@ import Database.Persist        ( Key, Entity, insert )
 import Core                    ( DatabaseEnvironmentT )
 import Database                ( runSql, runSqlMaybe, standardDelete )
 import Json.Resource           ( Resource(..) )
-import Json.WithId             ( WithId(..), addId, idToText )
+import Json.WithId             ( WithId, addId, idToText )
 import qualified Schema as DB
 
 

@@ -3,11 +3,10 @@
 
 module Json.WithId
 (
-  WithId(..)
-, getId
+  WithId
+, getId, getKey
 , addId
-, idToText
-, textToId
+, idToText, textToId
 )
 where
 
@@ -16,6 +15,7 @@ import Data.Aeson           ( ToJSON(..), FromJSON(..), Value(..), (.:) )
 import Data.Aeson.Types     ( Parser )
 import Data.HashMap.Strict  ( insert )
 import Data.Int             ( Int64 )
+import Data.Maybe           ( fromJust )
 import qualified Data.Text as T
                             ( Text )
 import Data.Text.Read       ( decimal )
@@ -23,15 +23,15 @@ import Database.Persist     ( Key, KeyBackend(Key), unKey, toPersistValue )
 import Web.PathPieces       ( toPathPiece )
 
 
-data WithId a = WithId
-    { id     :: T.Text
-    , value :: a
-    }
+data (ToJSON j, FromJSON j) => WithId j = WithId T.Text j
 
-getId :: WithId a -> T.Text
+getId :: (ToJSON j, FromJSON j) => WithId j -> T.Text
 getId (WithId i _) = i
 
-addId :: Key d -> v -> WithId v
+getKey :: (ToJSON j, FromJSON j) => WithId j -> Key d
+getKey (WithId i _) = fromJust $ textToId i
+
+addId :: (ToJSON j, FromJSON j) => Key d -> j -> WithId j
 addId =
     WithId . idToText
 
@@ -49,7 +49,7 @@ mkKey :: Int64 -> Key d
 mkKey =
     Key . toPersistValue
 
-instance (ToJSON a) => ToJSON (WithId a) where
+instance (ToJSON j, FromJSON j) => ToJSON (WithId j) where
     toJSON (WithId idv av) =
         Object . insert "id" (String idv) . unObject . toJSON $ av
       where
@@ -57,7 +57,7 @@ instance (ToJSON a) => ToJSON (WithId a) where
             Object v -> v
             _        -> undefined
 
-instance (FromJSON a) => FromJSON (WithId a) where
+instance (ToJSON j, FromJSON j) => FromJSON (WithId j) where
     parseJSON vo = case vo of
         Object v -> fromJson v
         _        -> mzero
