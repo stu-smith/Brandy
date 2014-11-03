@@ -7,31 +7,36 @@ module Routing
 )
 where
 
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T   ( append, intercalate )
 import qualified Data.Text.Lazy as TL
-                                  ( Text, fromStrict )
+                                  ( fromStrict )
 import Network.HTTP.Types.Status  ( methodNotAllowed405 )
 import Network.Wai                ( pathInfo )
-import Web.Scotty.Trans           ( ScottyT, get, put, post, delete, param, function )
+import Web.Scotty.Trans           ( get, put, post, delete, param, function )
 
-import Core                       ( BrandyScottyM, DatabaseEnvironmentT, ApiError(..) )
+import Core                       ( BrandyScottyM, ApiError(..) )
 import Api.Users                  ( apiGetUsers, apiGetUser, apiAddUser, apiUpdateUser, apiDeleteUser )
 import Api.Resources              ( apiGetResources, apiGetResource
                                   , apiAddResource, apiUpdateResource, apiDeleteResource )
 import Api.ResourceContent        ( apiGetResourceContent, apiUpdateResourceContent )
 import Api.Tags                   ( apiGetTags, apiGetTag, apiAddTag, apiUpdateTag, apiDeleteTag )
 import ApiUtility                 ( apiError )
+import Plugins                    ( PluggedIn, getRoutesHandlers )
 import Transforms.Resource        ( handleResource )
 
 
-routes :: BrandyScottyM ()
-routes = do
+routes :: PluggedIn -> BrandyScottyM ()
+routes plugin = do
+    liftIO $ putStrLn "routes"
     apiRoutes
     resourceRoutes
+    pluginRoutes plugin
 
 
-apiRoutes :: ScottyT TL.Text DatabaseEnvironmentT ()
+apiRoutes :: BrandyScottyM ()
 apiRoutes = do
+    liftIO $ putStrLn "apiRoutes"
 
     get     userCollection           apiGetUsers
     get     userElement            $ apiGetUser                 =<< key
@@ -71,10 +76,22 @@ apiRoutes = do
     key                    = param "key"
 
 
-resourceRoutes :: ScottyT TL.Text DatabaseEnvironmentT ()
-resourceRoutes =
+resourceRoutes :: BrandyScottyM ()
+resourceRoutes = do
+    liftIO $ putStrLn "resourceRoutes"
     get (function getEntire) $ handleResource =<< entire
   where
     entireKey     = "__entire"
     entire        = param entireKey
     getEntire req = Just [(entireKey, TL.fromStrict ("/" `T.append` T.intercalate "/" (pathInfo req)))]
+
+
+pluginRoutes :: PluggedIn -> BrandyScottyM ()
+pluginRoutes plugin = do
+    liftIO $ putStrLn "pluginRoutes"
+    liftIO $ putStrLn ("# RH = " ++ show (length routeHandlers))
+    sequence_ routeHandlers
+  where
+    routeHandlers = getRoutesHandlers plugin
+
+--up :: ScottyT TL.Text IO () -> ScottyT TL.Text (ReaderT T.Text IO) ()

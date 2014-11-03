@@ -45,6 +45,7 @@ import Web.Scotty.Trans            ( scottyAppT )
 
 import Core                        ( BrandyScottyM )
 import Database                    ( runSql )
+import Plugins                     ( mkPlugin )
 import Routing                     ( routes )
 import Schema                      ( migrate )
 
@@ -74,7 +75,7 @@ runTest test =
     withSystemTempFile "brandytest.sqlite3" $ \f _ -> do
         let file = T.pack f
         _   <- runReaderT (runSql . runMigrationSilent $ migrate) file
-        app <- liftIO $ scottyApp file routes
+        app <- liftIO $ scottyApp file $ routes mkPlugin
         test app
 
 scottyApp :: T.Text -> BrandyScottyM () -> IO Application
@@ -146,4 +147,4 @@ uriToByteString (URIBuilder p q) =
 
 simpleHeader :: HeaderName -> SResponse -> BS.ByteString
 simpleHeader name =
-    snd . fromJust . find (\x -> (fst x == name)) . simpleHeaders
+    snd . fromJust . find ((name ==) . fst) . simpleHeaders
