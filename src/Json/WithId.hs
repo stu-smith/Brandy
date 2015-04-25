@@ -1,5 +1,6 @@
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Json.WithId
 (
@@ -19,7 +20,8 @@ import Data.Maybe           ( fromJust )
 import qualified Data.Text as T
                             ( Text )
 import Data.Text.Read       ( decimal )
-import Database.Persist     ( Key, KeyBackend(Key), unKey, toPersistValue )
+import Database.Persist     ( Key(..), ToBackendKey )
+import Database.Persist.Sql ( SqlBackend, toSqlKey, fromSqlKey )
 import Web.PathPieces       ( toPathPiece )
 
 
@@ -28,26 +30,25 @@ data (ToJSON j, FromJSON j) => WithId j = WithId T.Text j
 getId :: (ToJSON j, FromJSON j) => WithId j -> T.Text
 getId (WithId i _) = i
 
-getKey :: (ToJSON j, FromJSON j) => WithId j -> Key d
+getKey :: (ToJSON j, FromJSON j, ToBackendKey SqlBackend d) => WithId j -> Key d
 getKey (WithId i _) = fromJust $ textToId i
 
-addId :: (ToJSON j, FromJSON j) => Key d -> j -> WithId j
+addId :: (ToJSON j, FromJSON j, ToBackendKey SqlBackend d) => Key d -> j -> WithId j
 addId =
     WithId . idToText
 
-idToText :: Key d -> T.Text
+idToText :: ToBackendKey SqlBackend d => Key d -> T.Text
 idToText =
-    toPathPiece . unKey
+    toPathPiece . idToInt
 
-textToId :: T.Text -> Maybe (Key d)
+idToInt :: ToBackendKey SqlBackend d => Key d -> Int64
+idToInt = fromSqlKey
+
+textToId :: ToBackendKey SqlBackend d => T.Text -> Maybe (Key d)
 textToId s =
     case decimal s of
-        Right (v, "") -> Just $ mkKey v
+        Right (v, "") -> Just $ toSqlKey v
         _             -> Nothing
-
-mkKey :: Int64 -> Key d
-mkKey =
-    Key . toPersistValue
 
 instance (ToJSON j, FromJSON j) => ToJSON (WithId j) where
     toJSON (WithId idv av) =

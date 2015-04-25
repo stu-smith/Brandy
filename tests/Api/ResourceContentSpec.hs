@@ -7,7 +7,6 @@ module Api.ResourceContentSpec
 )
 where
 
-import Control.Applicative        ( (<$>) )
 import qualified Data.ByteString as BS
                                   ( empty )
 import qualified Data.ByteString.Lazy as BSL

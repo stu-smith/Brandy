@@ -7,7 +7,6 @@ module Transforms.NoneSpec
 )
 where
 
-import Control.Applicative        ( (<$>) )
 import Data.Monoid                ( (<>) )
 import Test.Hspec                 ( Spec, describe, it, shouldBe )
 import Network.HTTP.Types.Status  ( ok200, notFound404 )

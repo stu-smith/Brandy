@@ -1,4 +1,6 @@
 
+{-# LANGUAGE FlexibleContexts #-}
+
 module DataAccess.Resources
 (
   dbGetAllResources
@@ -10,7 +12,6 @@ module DataAccess.Resources
 )
 where
 
-import Control.Applicative     ( (<$>), (<*>) )
 import Control.Monad.IO.Class  ( liftIO )
 import qualified Data.ByteString as BS
                                ( empty )

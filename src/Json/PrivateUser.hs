@@ -9,7 +9,6 @@ module Json.PrivateUser
 )
 where
 
-import Control.Applicative         ( (<$>), (<*>) )
 import Control.Monad.Trans.Either  ( right )
 import Data.Aeson                  ( ToJSON, FromJSON )
 import Data.Text as T              ( Text, null )

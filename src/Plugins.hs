@@ -9,8 +9,6 @@ module Plugins
 )
 where
 
-import Data.Monoid                   ( Monoid(..) )
-
 import Core                          ( BrandyScottyM )
 import Transforms.ResourceTransform  ( ResourceTransform )
 

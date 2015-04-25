@@ -27,8 +27,8 @@ handleResource :: T.Text -> BrandyActionM ()
 handleResource path = do
     maybeResource <- lift $ dbGetResourceByPath path
     case maybeResource of
-        Nothing       -> next
-        Just r -> sendResource r
+        Nothing -> next
+        Just r  -> sendResource r
 
 sendResource :: WithId Resource -> BrandyActionM ()
 sendResource resource = do

@@ -9,7 +9,6 @@ module Api.UsersSpec
 )
 where
 
-import Control.Applicative        ( (<$>) )
 import Data.Aeson                 ( FromJSON, ToJSON, toJSON )
 import Data.Monoid                ( (<>) )
 import Network.HTTP.Types.Status  ( ok200, created201, noContent204

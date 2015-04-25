@@ -7,7 +7,6 @@ module Routing
 )
 where
 
-import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T   ( append, intercalate )
 import qualified Data.Text.Lazy as TL
                                   ( fromStrict )
@@ -28,7 +27,6 @@ import Transforms.Resource        ( handleResource )
 
 routes :: PluggedIn -> BrandyScottyM ()
 routes plugin = do
-    liftIO $ putStrLn "routes"
     apiRoutes
     resourceRoutes
     pluginRoutes plugin
@@ -36,7 +34,6 @@ routes plugin = do
 
 apiRoutes :: BrandyScottyM ()
 apiRoutes = do
-    liftIO $ putStrLn "apiRoutes"
 
     get     userCollection           apiGetUsers
     get     userElement            $ apiGetUser                 =<< key
@@ -78,7 +75,6 @@ apiRoutes = do
 
 resourceRoutes :: BrandyScottyM ()
 resourceRoutes = do
-    liftIO $ putStrLn "resourceRoutes"
     get (function getEntire) $ handleResource =<< entire
   where
     entireKey     = "__entire"
@@ -88,8 +84,6 @@ resourceRoutes = do
 
 pluginRoutes :: PluggedIn -> BrandyScottyM ()
 pluginRoutes plugin = do
-    liftIO $ putStrLn "pluginRoutes"
-    liftIO $ putStrLn ("# RH = " ++ show (length routeHandlers))
     sequence_ routeHandlers
   where
     routeHandlers = getRoutesHandlers plugin

@@ -32,7 +32,6 @@ import Data.List                   ( find )
 import qualified Data.Text as T    ( Text, pack )
 import Data.Text.Encoding          ( encodeUtf8 )
 import Data.Maybe                  ( fromJust )
-import Data.Monoid                 ( Monoid(..) )
 import Database.Persist.Sql        ( runMigrationSilent )
 import Network.Wai                 ( Application, Request(..) )
 import Network.Wai.Test            ( SRequest(..), SResponse

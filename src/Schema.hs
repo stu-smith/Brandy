@@ -1,8 +1,9 @@
 
-{-# LANGUAGE FlexibleContexts, FlexibleInstances #-}
-{-# LANGUAGE GADTs, TypeFamilies                 #-}
-{-# LANGUAGE TemplateHaskell, QuasiQuotes        #-}
-{-# LANGUAGE OverloadedStrings                   #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances        #-}
+{-# LANGUAGE GADTs, TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving                 #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes               #-}
+{-# LANGUAGE OverloadedStrings                          #-}
 
 module Schema
 where
@@ -12,10 +13,10 @@ import qualified Data.ByteString as BS
 import qualified Data.Text as T
                             ( Text )
 import Data.Time            ( UTCTime )
-import Database.Persist.TH  ( share, mkPersist, sqlOnlySettings, mkMigrate, persistLowerCase )
+import Database.Persist.TH  ( share, mkPersist, sqlSettings, mkMigrate, persistLowerCase )
 
 
-share [mkPersist sqlOnlySettings, mkMigrate "migrate"] [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrate"] [persistLowerCase|
 
     User
         email           T.Text

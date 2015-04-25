@@ -7,9 +7,9 @@ module Json.PublicUserSummary
 )
 where
 
-import Data.Aeson              ( ToJSON, FromJSON )
+import Data.Aeson      ( ToJSON, FromJSON )
 import Data.Text as T  ( Text )
-import GHC.Generics            ( Generic )
+import GHC.Generics    ( Generic )
 
 
 data PublicUserSummary = PublicUserSummary

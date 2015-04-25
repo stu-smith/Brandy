@@ -13,7 +13,8 @@ module DataAccess.Users
 where
 
 import Database.Esqueleto                           ( Value(..), select, from, (^.) )
-import Database.Persist                             ( Key )
+import Database.Persist                             ( Key(..) )
+import Data.Text as T  ( Text )
 
 import Core                                         ( DatabaseEnvironmentT )
 import Database                                     ( runSql
@@ -31,6 +32,7 @@ dbGetAllUsers =
                  return (u ^. DB.UserId, u ^. DB.UserDisplayName)
         return $ map dToJ users
   where
+    dToJ :: (Value (Key DB.User), Value T.Text) -> WithId PublicUserSummary 
     dToJ (Value uId, Value uDisplayName) =
         addId uId $ PublicUserSummary uDisplayName
 

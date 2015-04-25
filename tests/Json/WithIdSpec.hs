@@ -1,7 +1,6 @@
 
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Json.WithIdSpec
@@ -10,16 +9,18 @@ module Json.WithIdSpec
 )
 where
 
-import Data.Aeson        ( ToJSON, FromJSON, encode, decode, toJSON )
-import Data.Maybe        ( fromJust )
-import Data.String       ( IsString(..) )
-import Database.Persist  ( Key, KeyBackend(Key), toPersistValue )
-import GHC.Generics      ( Generic )
-import Test.Hspec        ( Spec, describe, it, shouldBe )
+import Data.Aeson           ( ToJSON, FromJSON, encode, decode, toJSON )
+import Data.Maybe           ( fromJust )
+import Database.Persist     ( Key )
+import Database.Persist.Sql ( toSqlKey )
+import GHC.Generics         ( Generic )
+import Test.Hspec           ( Spec, describe, it, shouldBe )
 import qualified Data.Text as T
-                         ( Text )
+                            ( Text )
 
-import Json.WithId       ( WithId, addId )
+import Json.WithId          ( WithId, addId )
+
+import qualified Schema as DB
 
 
 instance (ToJSON j, FromJSON j) => Show (WithId j) where
@@ -39,10 +40,6 @@ data SampleType = SampleType
 instance ToJSON SampleType
 instance FromJSON SampleType
 
-instance IsString (KeyBackend d SampleType) where
-    fromString = Key . toPersistValue
-
-
 spec :: Spec
 spec =
 
@@ -51,12 +48,12 @@ spec =
         it "should serialize data and include id" $ do
             let withoutId = SampleType { name = "Sample Name", number = 123 }
             encode withoutId `shouldBe` "{\"name\":\"Sample Name\",\"number\":123}"
-            let withId = addId ("XYZ" :: Key SampleType) withoutId
-            encode withId `shouldBe` "{\"name\":\"Sample Name\",\"id\":\"XYZ\",\"number\":123}"
+            let withId = addId ((toSqlKey 789) :: Key DB.User) withoutId
+            encode withId `shouldBe` "{\"name\":\"Sample Name\",\"id\":\"789\",\"number\":123}"
 
         it "should deserialize data that includes id" $ do
-            let decoded = decode "{\"name\":\"Sample Name\",\"id\":\"XYZ\",\"number\":123}" :: Maybe (WithId SampleType)
-            (encode . fromJust $ decoded) `shouldBe` "{\"name\":\"Sample Name\",\"id\":\"XYZ\",\"number\":123}"
+            let decoded = decode "{\"name\":\"Sample Name\",\"id\":\"789\",\"number\":123}" :: Maybe (WithId SampleType)
+            (encode . fromJust $ decoded) `shouldBe` "{\"name\":\"Sample Name\",\"id\":\"789\",\"number\":123}"
 
         it "should not deserialize data that does not includes id" $ do
             let decoded = decode "{\"name\":\"Sample Name\",\"number\":123}" :: Maybe (WithId SampleType)

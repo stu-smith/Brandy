@@ -17,7 +17,6 @@ module Database
 )
 where
 
-import Control.Applicative           ( (<$>) )
 import Control.Monad.CatchIO         ( MonadCatchIO, try )
 import Control.Exception             ( IOException )
 import Control.Monad.IO.Class        ( MonadIO )
@@ -30,7 +29,7 @@ import Control.Monad.Trans.Control   ( MonadBaseControl )
 import Control.Monad.Trans.Resource  ( ResourceT )
 import Data.Aeson                    ( FromJSON, ToJSON )
 import Data.Either.Combinators       ( rightToMaybe )
-import Database.Persist              ( Key, get, insert, replace, delete, selectList )
+import Database.Persist              ( Key, ToBackendKey, get, insert, replace, delete, selectList )
 import Database.Persist.Class        ( PersistEntity, PersistEntityBackend )
 import Database.Persist.Sql          ( SqlPersistT, SqlBackend )
 import Database.Persist.Sqlite       ( runSqlite )
@@ -41,7 +40,7 @@ import Json.WithId                   ( WithId, addId )
 import Core                          ( DatabaseEnvironmentT )
 
 
-data (PersistEntityBackend d ~ SqlBackend, PersistEntity d) => JsonDataAccessMapping j d = JsonDataAccessMapping 
+data (PersistEntityBackend d ~ SqlBackend, PersistEntity d) => JsonDataAccessMapping j d = JsonDataAccessMapping
     { jsonToDataAccess :: j -> d
     , dataAccessToJson :: d -> j
     }
@@ -63,7 +62,7 @@ runSqlMaybe action = do
         result <- (try $ runSqlite conn action) :: m (Either IOException a)
         return $ rightToMaybe result
 
-standardGetAll :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToJSON j, FromJSON j)
+standardGetAll :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToBackendKey SqlBackend d, ToJSON j, FromJSON j)
                => JsonDataAccessMapping j d -> DatabaseEnvironmentT [WithId j]
 standardGetAll (JsonDataAccessMapping _ dToJ) = do
     dbs <- runSql $ selectList [] []
@@ -71,7 +70,7 @@ standardGetAll (JsonDataAccessMapping _ dToJ) = do
   where
     eToJ (Entity k v) = addId k $ dToJ v
 
-standardGetByKey :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToJSON j, FromJSON j)
+standardGetByKey :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToBackendKey SqlBackend d, ToJSON j, FromJSON j)
                  => JsonDataAccessMapping j d -> Key d -> DatabaseEnvironmentT (Maybe (WithId j))
 standardGetByKey (JsonDataAccessMapping _ dToJ) key = do
     maybeDb <- runSql $ get key
@@ -79,7 +78,7 @@ standardGetByKey (JsonDataAccessMapping _ dToJ) key = do
   where
     toApi db = addId key $ dToJ db
 
-standardInsert :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToJSON j, FromJSON j)
+standardInsert :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToBackendKey SqlBackend d, ToJSON j, FromJSON j)
                => JsonDataAccessMapping j d -> j -> DatabaseEnvironmentT (Maybe (WithId j))
 standardInsert (JsonDataAccessMapping jToD dToJ) json = do
     maybeId <- runSqlMaybe $ insert db
@@ -88,7 +87,7 @@ standardInsert (JsonDataAccessMapping jToD dToJ) json = do
     db        = jToD json
     toApi key = addId key $ dToJ db
 
-standardUpdate :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToJSON j, FromJSON j)
+standardUpdate :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToBackendKey SqlBackend d, ToJSON j, FromJSON j)
                => JsonDataAccessMapping j d -> Key d -> j -> DatabaseEnvironmentT (Maybe (WithId j))
 standardUpdate (JsonDataAccessMapping jToD _) key json =
     runSql $ do

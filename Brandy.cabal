@@ -8,7 +8,7 @@ author:              Stu Smith
 maintainer:          stusmith1977@gmail.com
 category:            Web
 build-type:          Simple
-cabal-version:       >=1.20
+cabal-version:       >= 1.22.2
 
 executable Brandy
   Default-Language:    Haskell2010
@@ -51,7 +51,7 @@ executable Brandy
 Test-Suite spec
   Type:                exitcode-stdio-1.0
   Default-Language:    Haskell2010
-  Hs-Source-Dirs:      test, src
+  Hs-Source-Dirs:      tests, src
   Ghc-Options:         -Wall -Werror
   Main-Is:             Spec.hs
   Other-Modules:       Api.ResourcesSpec, Api.UsersSpec

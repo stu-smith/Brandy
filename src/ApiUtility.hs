@@ -1,5 +1,6 @@
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module ApiUtility
 (
@@ -15,7 +16,6 @@ module ApiUtility
 )
 where
 
-import Control.Applicative         ( (<$>) )
 import Control.Monad               ( void )
 import Control.Monad.Trans         ( MonadTrans, lift )
 import Control.Monad.Trans.Either  ( EitherT, runEitherT, left, right )
@@ -25,12 +25,13 @@ import qualified Data.ByteString.Lazy as BSL
 import qualified Data.Text as T    ( Text )
 import qualified Data.Text.Lazy as TL
                                    ( Text, toStrict )
-import Database.Persist            ( Key )
+import Database.Persist            ( Key, ToBackendKey )
+import Database.Persist.Sql        ( SqlBackend )
 import Network.HTTP.Types.Status   ( Status, ok200, created201, noContent204
                                    , badRequest400, unauthorized401, notFound404, conflict409 )
 import Web.Scotty.Trans            ( json, text, status, body, params, raw, setHeader )
 
-import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )  
+import Core                        ( ApiError(..), BrandyActionM, DatabaseEnvironmentT )
 import Json.WithId                 ( WithId, textToId )
 import qualified Schema as DB
 
@@ -98,7 +99,7 @@ validateBody =
   where
     invalid = apiFail badRequest400 "Invalid request body."
 
-apiDbGetSingle :: T.Text -> (Key d -> DatabaseEnvironmentT (Maybe a)) -> EitherT ApiError BrandyActionM a
+apiDbGetSingle :: ToBackendKey SqlBackend d => T.Text -> (Key d -> DatabaseEnvironmentT (Maybe a)) -> EitherT ApiError BrandyActionM a
 apiDbGetSingle keyText dbGet = do
     key        <- readKey keyText
     maybeValue <- liftDB $ dbGet key
@@ -114,7 +115,7 @@ apiDbInsert dbInsert = do
     maybePost <- liftDB . dbInsert $ pre
     validateDbInsert maybePost
 
-apiDbUpdate :: (FromJSON a, Validate a)
+apiDbUpdate :: (FromJSON a, Validate a, ToBackendKey SqlBackend d)
             => T.Text -> (Key d -> a -> DatabaseEnvironmentT (Maybe (WithId a)))
             -> EitherT ApiError BrandyActionM (WithId a)
 apiDbUpdate keyText dbUpdate = do
@@ -123,20 +124,20 @@ apiDbUpdate keyText dbUpdate = do
     maybePost <- liftDB $ dbUpdate key pre
     validateDbExists maybePost
 
-apiDbDelete :: T.Text -> (Key d -> DatabaseEnvironmentT ()) -> EitherT ApiError BrandyActionM ()
+apiDbDelete :: ToBackendKey SqlBackend d => T.Text -> (Key d -> DatabaseEnvironmentT ()) -> EitherT ApiError BrandyActionM ()
 apiDbDelete keyText dbDelete =
     readKey_ keyText $ liftDB . dbDelete
 
-readKey :: Monad m => T.Text -> EitherT ApiError m (Key a)
+readKey :: (Monad m, ToBackendKey SqlBackend a) => T.Text -> EitherT ApiError m (Key a)
 readKey =
     readKeyInternal right
                     (left $ ApiError notFound404 "Not found.")
 
-readKey_ :: Monad m => T.Text -> (Key a -> EitherT ApiError m ()) -> EitherT ApiError m ()
+readKey_ :: (Monad m, ToBackendKey SqlBackend a) => T.Text -> (Key a -> EitherT ApiError m ()) -> EitherT ApiError m ()
 readKey_ s a =
     void $ readKeyInternal a (return ()) s
 
-readKeyInternal :: (Key d -> r) -> r -> T.Text -> r
+readKeyInternal :: ToBackendKey SqlBackend d => (Key d -> r) -> r -> T.Text -> r
 readKeyInternal rf lf =
     maybe lf rf . textToId
 

@@ -7,9 +7,7 @@ module Main
 )
 where
 
-import Control.Applicative                   ( (<$>) )
 import Control.Monad.Trans.Reader            ( ReaderT(..), runReaderT )
-import Data.Monoid                           ( mconcat )
 import qualified Data.Text as T              ( Text )
 import System.Environment                    ( getEnv )
 import Database.Persist.Sql                  ( runMigration )

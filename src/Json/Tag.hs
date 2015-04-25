@@ -9,7 +9,6 @@ module Json.Tag
 )
 where
 
-import Control.Applicative         ( (<$>) )
 import Control.Monad.Trans.Either  ( right )
 import Data.Aeson                  ( ToJSON, FromJSON )
 import qualified Data.Text as T    ( Text, null )

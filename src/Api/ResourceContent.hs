@@ -8,7 +8,6 @@ module Api.ResourceContent
 )
 where
 
-import Control.Applicative         ( (<$>) )
 import qualified Data.ByteString.Lazy as BSL
                                    ( fromStrict, toStrict, empty )
 import qualified Data.Text as T    ( Text )

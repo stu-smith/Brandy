@@ -9,7 +9,6 @@ module Api.ResourcesSpec
 )
 where
 
-import Control.Applicative        ( (<$>) )
 import Data.Aeson                 ( FromJSON, ToJSON, toJSON )
 import Data.Monoid                ( (<>) )
 import Data.Time.Clock            ( getCurrentTime )

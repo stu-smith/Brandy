@@ -7,7 +7,6 @@ module Plugins.AdminSite.Plugin
 )
 where
 
-import Control.Monad.IO.Class (liftIO)
 import Data.Monoid       ( (<>) )
 import Web.Scotty.Trans  ( get, text )
 
@@ -22,6 +21,5 @@ plugin =
 
 testRouteHandler :: BrandyScottyM ()
 testRouteHandler = do
-    liftIO $ putStrLn "testRouteHandler"
-    get "/" $ text "ROOT"
+    get "/"           $ text "ROOT"
     get "/styles.css" $ text "CSS"
