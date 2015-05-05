@@ -18,7 +18,6 @@ module Database
 where
 
 import Control.Monad.CatchIO         ( MonadCatchIO, try )
-import Control.Exception             ( IOException )
 import Control.Monad.IO.Class        ( MonadIO )
 import Control.Monad.Logger          ( NoLoggingT )
 import Control.Monad.Reader          ( ask )
@@ -34,6 +33,7 @@ import Database.Persist.Class        ( PersistEntity, PersistEntityBackend )
 import Database.Persist.Sql          ( SqlPersistT, SqlBackend )
 import Database.Persist.Sqlite       ( runSqlite )
 import Database.Persist.Types        ( Entity(..) )
+import Database.Sqlite               ( SqliteException )
 import qualified Data.Text as T      ( Text )
 
 import Json.WithId                   ( WithId, addId )
@@ -52,15 +52,11 @@ runSql action = do
     lift $ runSqlite conn action
 
 runSqlMaybe :: forall a . forall m . forall t .
-               (MonadCatchIO m, MonadIO m, MonadBaseControl IO m, MonadTrans t, MonadReader T.Text (t m))
+               (MonadCatchIO (t m), MonadCatchIO m, MonadIO m, MonadBaseControl IO m, MonadTrans t, MonadReader T.Text (t m))
             => SqlPersistT (NoLoggingT (ResourceT m)) a -> t m (Maybe a)
 runSqlMaybe action = do
-    conn <- ask
-    lift $ runWithTry conn
-  where
-    runWithTry conn = do
-        result <- (try $ runSqlite conn action) :: m (Either IOException a)
-        return $ rightToMaybe result
+    result <- (try $ runSql action) :: t m (Either SqliteException a)
+    return $ rightToMaybe result
 
 standardGetAll :: (PersistEntityBackend d ~ SqlBackend, PersistEntity d, ToBackendKey SqlBackend d, ToJSON j, FromJSON j)
                => JsonDataAccessMapping j d -> DatabaseEnvironmentT [WithId j]
