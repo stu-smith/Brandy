@@ -26,9 +26,7 @@ import Json.WithId                 ( WithId, getKey )
 handleResource :: T.Text -> BrandyActionM ()
 handleResource path = do
     maybeResource <- lift $ dbGetResourceByPath path
-    case maybeResource of
-        Nothing -> next
-        Just r  -> sendResource r
+    maybe next sendResource maybeResource
 
 sendResource :: WithId Resource -> BrandyActionM ()
 sendResource resource = do
